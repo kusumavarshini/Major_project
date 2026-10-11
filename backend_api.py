@@ -13,6 +13,8 @@ from typing import Any, Dict, List, Optional
 
 import cv2
 import numpy as np
+import uuid
+from mysql_auth import enroll_fingerprint
 from fastapi import FastAPI, File, Form, UploadFile, HTTPException, Query
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -34,6 +36,7 @@ from authentication import (
 from matcher import MATCHER, SourceAFISMatcher
 from database import (
     get_dataset_statistics,
+    get_gallery_statistics,
     MATCH_THRESHOLD,
     test_mysql_connection,
 )
@@ -89,8 +92,239 @@ def dataset_stats():
     return get_dataset_statistics()
 
 
+@app.get("/api/gallery/stats")
+@app.get("/gallery/stats")
+def gallery_stats():
+    """
+    Retrieve statistics from the operational FVC gallery (newdb.external_fvc_clean_gallery).
+    This is the gallery used by the live identification pipeline.
+    """
+    return get_gallery_statistics()
+
+
+@app.post("/api/fingerprint/enroll")
+async def enroll_fingerprint_api(
+    fingerprint: UploadFile = File(...),
+    subject_id: str = Form("TEST-USER-001"),
+):
+    if not subject_id.strip():
+        raise HTTPException(status_code=400, detail="Subject ID cannot be empty.")
+
+    image_bytes = await fingerprint.read()
+    image = cv2.imdecode(
+        np.frombuffer(image_bytes, dtype=np.uint8),
+        cv2.IMREAD_GRAYSCALE,
+    )
+
+    if image is None or image.size == 0:
+        raise HTTPException(status_code=400, detail="Invalid fingerprint image.")
+
+    template = MATCHER.extract_template(image)
+
+    if template.get("minutiae_count", 0) < 2:
+        raise HTTPException(
+            status_code=400,
+            detail="Not enough minutiae detected. Capture again.",
+        )
+
+    image_dir = CURRENT_DIR / "experiments" / "enrollment_images"
+    image_dir.mkdir(parents=True, exist_ok=True)
+
+    filename = f"enrolled_{uuid.uuid4().hex}.png"
+    image_path = image_dir / filename
+
+    if not cv2.imwrite(str(image_path), image):
+        raise HTTPException(status_code=500, detail="Could not save image.")
+
+    try:
+        fingerprint_id = enroll_fingerprint(
+            subject_id=subject_id.strip(),
+            filename=filename,
+            image_path=str(image_path.resolve()),
+            image_width=int(image.shape[1]),
+            image_height=int(image.shape[0]),
+            template=template,
+        )
+    except Exception as exc:
+        image_path.unlink(missing_ok=True)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Fingerprint enrollment failed: {exc}",
+        ) from exc
+
+    return {
+        "success": True,
+        "message": "Fingerprint enrolled successfully.",
+        "fingerprint_id": fingerprint_id,
+        "subject_id": subject_id.strip(),
+        "minutiae_count": template["minutiae_count"],
+    }
+
+
 # ============================================================
-# PRIMARY USER WORKFLOW: 1:N IDENTIFICATION
+# SECUGEN LIVE CAPTURE INTEGRATION
+# ============================================================
+
+@app.get("/api/fingerprint/device-status")
+@app.get("/fingerprint/device-status")
+async def get_device_status():
+    """Check SecuGen Bio Server availability and device status."""
+    try:
+        import httpx
+        
+        # Try to connect to SecuGen Bio Server
+        async with httpx.AsyncClient(verify=False, timeout=5.0) as client:
+            try:
+                # Try HTTPS first
+                response = await client.get('https://localhost:8000/status')
+                if response.status_code == 200:
+                    return {
+                        "available": True,
+                        "device_name": "SecuGen Hamster Pro 20",
+                        "error": None,
+                        "service_url": "https://localhost:8000"
+                    }
+            except Exception:
+                # Fall back to HTTP
+                response = await client.get('http://localhost:8000/status')
+                if response.status_code == 200:
+                    return {
+                        "available": True,
+                        "device_name": "SecuGen Hamster Pro 20", 
+                        "error": None,
+                        "service_url": "http://localhost:8000"
+                    }
+                    
+        return {
+            "available": False,
+            "device_name": None,
+            "error": "SecuGen Bio Server not responding on port 8000"
+        }
+        
+    except Exception as e:
+        return {
+            "available": False,
+            "device_name": None,
+            "error": f"Device status check failed: {str(e)}"
+        }
+
+
+@app.post("/api/fingerprint/capture-and-search")
+@app.post("/fingerprint/capture-and-search")
+async def capture_and_search_fingerprint(
+    top_n: int = Form(5, description="Number of top candidates to return"),
+    threshold: Optional[float] = Form(None, description="Custom matching threshold"),
+    force_rectification: bool = Form(False, description="Force DDRNet rectification")
+):
+    """
+    Capture fingerprint via SecuGen Bio Server and immediately search gallery.
+    This endpoint acts as a server-side proxy to avoid browser CORS issues.
+    """
+    try:
+        import httpx
+        import base64
+        
+        if threshold is not None:
+            t_thresh = threshold if threshold > 1.0 else (threshold * 100.0 if threshold > 0.0 else MATCH_THRESHOLD)
+        else:
+            t_thresh = MATCH_THRESHOLD
+        
+        # Try multiple SecuGen Bio Server endpoints in order
+        capture_endpoints = [
+            {
+                'url': 'https://localhost:8000/scan',
+                'method': 'POST',
+                'body': {'timeout': 10000, 'format': 'base64', 'quality': 'high'}
+            },
+            {
+                'url': 'https://localhost:8000/capture', 
+                'method': 'POST',
+                'body': {'timeout': 10000, 'captureMode': 'single'}
+            },
+            {
+                'url': 'https://localhost:8000/FPCapture',
+                'method': 'POST', 
+                'body': {'timeout': 10000}
+            },
+            {
+                'url': 'http://localhost:8000/scan',
+                'method': 'POST',
+                'body': {'timeout': 10000, 'format': 'base64'}
+            }
+        ]
+        
+        captured_image = None
+        successful_endpoint = None
+        
+        async with httpx.AsyncClient(verify=False, timeout=15.0) as client:
+            for endpoint in capture_endpoints:
+                try:
+                    response = await client.request(
+                        method=endpoint['method'],
+                        url=endpoint['url'],
+                        json=endpoint['body'],
+                        headers={'Content-Type': 'application/json'}
+                    )
+                    
+                    if response.status_code == 200:
+                        capture_data = response.json()
+                        
+                        # Check for successful capture response
+                        if (capture_data.get('status') == 'success' and 
+                            capture_data.get('image')):
+                            
+                            # Extract base64 image data
+                            image_data_str = capture_data['image']
+                            if ',' in image_data_str:
+                                image_data_str = image_data_str.split(',')[1]
+                            
+                            # Decode base64 to numpy array
+                            image_bytes = base64.b64decode(image_data_str)
+                            image = cv2.imdecode(
+                                np.frombuffer(image_bytes, dtype=np.uint8),
+                                cv2.IMREAD_GRAYSCALE
+                            )
+                            
+                            if image is not None and image.size > 0:
+                                captured_image = image
+                                successful_endpoint = endpoint['url']
+                                break
+                                
+                except Exception as e:
+                    # Continue to next endpoint if this one fails
+                    continue
+        
+        if captured_image is None:
+            raise HTTPException(
+                status_code=502,
+                detail="Failed to capture fingerprint from SecuGen Bio Server. Please ensure the service is running and a finger is placed on the scanner."
+            )
+        
+        # Run the existing identification pipeline
+        result = identify_fingerprint(
+            fingerprint_image=captured_image,
+            top_n=top_n,
+            threshold=t_thresh,
+            force_rectification=force_rectification
+        )
+        
+        # Add capture metadata to result
+        result['capture_method'] = 'SecuGen Bio Server'
+        result['capture_endpoint'] = successful_endpoint
+        
+        return result
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Capture and search error: {str(e)}"
+        )
+
+
+# ============================================================
+# PRIMARY USER WORKFLOW: 1:N IDENTIFICATION  
 # ============================================================
 
 @app.post("/fingerprint/search")
@@ -102,10 +336,8 @@ async def fingerprint_search(
     force_rectification: bool = Form(False, description="Force DDRNet rectification"),
 ):
     """
-    1:N Biometric Identification:
-    User uploads a single fingerprint image.
-    Backend handles preprocessing, DDRNet rectification, SourceAFIS template generation,
-    and 1:N database search to find the nearest matching identities.
+    1:N Biometric Identification: handles preprocessing, DDRNet rectification,
+    SourceAFIS template generation, and 1:N database search.
     """
     try:
         image_bytes = await fingerprint.read()
@@ -154,13 +386,13 @@ async def fingerprint_match(
             t_thresh = threshold if threshold > 1.0 else (threshold * 100.0 if threshold > 0.0 else MATCH_THRESHOLD)
         else:
             t_thresh = MATCH_THRESHOLD
+
         probe_bytes = await probe_fingerprint.read()
         probe_img = cv2.imdecode(np.frombuffer(probe_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
 
         if probe_img is None:
             raise HTTPException(status_code=400, detail="Invalid probe image file.")
 
-        # If reference image uploaded, match directly
         if reference_fingerprint is not None:
             ref_bytes = await reference_fingerprint.read()
             ref_img = cv2.imdecode(np.frombuffer(ref_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
@@ -181,7 +413,6 @@ async def fingerprint_match(
                 "threshold": t_thresh,
             }
 
-        # Otherwise match against enrolled subject
         if not subject_id:
             raise HTTPException(
                 status_code=400,
@@ -216,9 +447,7 @@ async def fingerprint_match(
 async def fingerprint_rectify(
     fingerprint: UploadFile = File(...),
 ):
-    """
-    Run DDRNet geometric rectification on uploaded fingerprint image.
-    """
+    """Run DDRNet geometric rectification on uploaded fingerprint image."""
     try:
         image_bytes = await fingerprint.read()
         image = cv2.imdecode(np.frombuffer(image_bytes, np.uint8), cv2.IMREAD_GRAYSCALE)
@@ -254,18 +483,17 @@ async def fingerprint_rectify(
 
 
 # ============================================================
-# DIAGNOSTIC INSPECTION ENDPOINT (PHASE 3)
+# DIAGNOSTIC INSPECTION ENDPOINT
 # ============================================================
 
 @app.post("/fingerprint/diagnostic/inspect")
 @app.post("/api/fingerprint/diagnostic/inspect")
 async def fingerprint_diagnostic_inspect(
-    fingerprint: UploadFile = File(..., description="Query image to visually inspect minutiae and preprocessing"),
+    fingerprint: UploadFile = File(..., description="Query image to visually inspect"),
 ):
     """
-    Diagnostic Endpoint:
-    Provides visual inspection of original image, preprocessed image,
-    DDRNet rectified image, and extracted minutiae overlay with endings/bifurcations.
+    Diagnostic: original image, preprocessed image, DDRNet rectified image,
+    and extracted minutiae overlay.
     """
     try:
         image_bytes = await fingerprint.read()
@@ -316,7 +544,6 @@ async def run_evaluation(
 ):
     """
     Run evaluation protocol comparing original distorted vs DDRNet rectified recognition.
-    Stores results in MySQL evaluation_results and computes real ROC-AUC, EER, FAR, FRR.
     """
     try:
         res = run_evaluation_protocol(sample_limit=sample_limit)

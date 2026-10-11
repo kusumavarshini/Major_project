@@ -136,6 +136,11 @@ export default function App() {
   const [customThreshold, setCustomThreshold] = useState<number>(45.0);
   const [rectificationMode, setRectificationMode] = useState<'auto' | 'force'>('auto');
 
+  // SecuGen scanning state
+  const [scanState, setScanState] = useState<'idle' | 'checking' | 'scanning' | 'done' | 'error'>('idle');
+  const [isScanInProgress, setIsScanInProgress] = useState(false);
+  const [deviceAvailable, setDeviceAvailable] = useState<boolean | null>(null);
+
   // Analytics & Dataset state
   const [stats, setStats] = useState<DatasetStats | null>(null);
   const [metrics, setMetrics] = useState<EvaluationMetrics | null>(null);
@@ -146,9 +151,94 @@ export default function App() {
 
   // Fetch initial stats and metrics
   useEffect(() => {
+    checkDeviceStatus();
     fetchStats();
     fetchMetrics();
   }, []);
+
+  const checkDeviceStatus = async () => {
+    try {
+      const response = await fetch(`${API_BASE}/api/fingerprint/device-status`);
+      if (response.ok) {
+        const data = await response.json();
+        setDeviceAvailable(data.available);
+      } else {
+        setDeviceAvailable(false);
+      }
+    } catch {
+      setDeviceAvailable(false);
+    }
+  };
+
+  const handleScanFingerprint = async () => {
+    if (isScanInProgress || isProcessing) return;
+    
+    setIsScanInProgress(true);
+    setScanState('checking');
+    setError(null);
+    setSearchResult(null);
+    
+    try {
+      // Check device status first
+      setScanState('checking');
+      const statusResponse = await fetch(`${API_BASE}/api/fingerprint/device-status`);
+      
+      if (!statusResponse.ok) {
+        throw new Error('Failed to check scanner status');
+      }
+      
+      const statusData = await statusResponse.json();
+      
+      if (!statusData.available) {
+        throw new Error(statusData.error || 'Scanner not connected. Check SecuGen Bio Server.');
+      }
+      
+      // Start capture
+      setScanState('scanning');
+      setCurrentStage(1);
+      
+      const formData = new FormData();
+      formData.append('top_n', '5');
+      formData.append('threshold', customThreshold.toString());
+      formData.append('force_rectification', (rectificationMode === 'force').toString());
+      
+      // Progress stage simulator
+      const stageTimer1 = setTimeout(() => setCurrentStage(2), 1000);
+      const stageTimer2 = setTimeout(() => setCurrentStage(3), 2000);
+      const stageTimer3 = setTimeout(() => setCurrentStage(4), 3000);
+      
+      const captureResponse = await fetch(`${API_BASE}/api/fingerprint/capture-and-search`, {
+        method: 'POST',
+        body: formData,
+      });
+      
+      clearTimeout(stageTimer1);
+      clearTimeout(stageTimer2);
+      clearTimeout(stageTimer3);
+      
+      if (!captureResponse.ok) {
+        const errData = await captureResponse.json().catch(() => ({}));
+        throw new Error(errData.detail || 'Fingerprint capture failed');
+      }
+      
+      const result: SearchResult = await captureResponse.json();
+      
+      // Set captured image preview from result
+      if (result.original_image_url) {
+        setImagePreview(`${API_BASE}${result.original_image_url}`);
+      }
+      
+      setCurrentStage(5);
+      setSearchResult(result);
+      setScanState('done');
+      
+    } catch (err: any) {
+      setScanState('error');
+      setError(err.message || 'Scanner error occurred');
+    } finally {
+      setIsScanInProgress(false);
+    }
+  };
 
   const fetchStats = async () => {
     try {
@@ -354,6 +444,55 @@ export default function App() {
 
             {/* Upload Area */}
             <div className="max-w-2xl mx-auto">
+              {/* SecuGen Scan Button */}
+              <div className="mb-6">
+                <button
+                  onClick={handleScanFingerprint}
+                  disabled={isScanInProgress || isProcessing}
+                  className={cn(
+                    'w-full px-6 py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all shadow-md mb-4',
+                    !isScanInProgress && !isProcessing && deviceAvailable
+                      ? 'bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-500 hover:to-indigo-400 text-white shadow-blue-600/20'
+                      : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                  )}
+                >
+                  {isScanInProgress ? (
+                    <>
+                      <RefreshCw className="h-4 w-4 animate-spin text-white" />
+                      <span>
+                        {scanState === 'checking' && 'Checking device...'}
+                        {scanState === 'scanning' && 'Place your finger on the scanner...'}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Fingerprint className="h-4 w-4" />
+                      <span>🖐️ SCAN FINGERPRINT (SecuGen)</span>
+                    </>
+                  )}
+                </button>
+                
+                {/* Device Status Indicator */}
+                <div className="flex items-center justify-center gap-2 text-xs">
+                  <div className={cn(
+                    "h-2 w-2 rounded-full",
+                    deviceAvailable === true ? "bg-emerald-500" : 
+                    deviceAvailable === false ? "bg-red-500" : "bg-amber-500 animate-pulse"
+                  )} />
+                  <span className="text-slate-400">
+                    {deviceAvailable === null ? 'Checking scanner...' :
+                     deviceAvailable ? 'Scanner connected' : 'Scanner not available'}
+                  </span>
+                </div>
+                
+                {/* OR Divider */}
+                <div className="flex items-center gap-4 my-6">
+                  <div className="flex-1 h-px bg-slate-800"></div>
+                  <span className="text-xs text-slate-500 px-3">OR</span>
+                  <div className="flex-1 h-px bg-slate-800"></div>
+                </div>
+              </div>
+
               <div
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
@@ -506,16 +645,16 @@ export default function App() {
             </div>
 
             {/* Live Processing Stages */}
-            {isProcessing && (
+            {(isProcessing || isScanInProgress) && (
               <div className="max-w-2xl mx-auto bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
                 <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                   <Activity className="h-4 w-4 text-emerald-400 animate-pulse" />
-                  Active Biometric Pipeline
+                  {isScanInProgress ? 'SecuGen Live Capture Pipeline' : 'Active Biometric Pipeline'}
                 </h3>
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {[
-                    { label: 'Image uploaded', stage: 1 },
+                    { label: isScanInProgress ? 'Device checked' : 'Image uploaded', stage: 1 },
                     { label: 'Preprocessing', stage: 2 },
                     { label: 'Distortion correction', stage: 3 },
                     { label: 'Template generation', stage: 4 },
