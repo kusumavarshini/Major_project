@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import os
 import sys
+import socket
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -162,51 +163,97 @@ async def enroll_fingerprint_api(
 
 
 # ============================================================
+# SECUGEN HELPER FUNCTIONS
+# ============================================================
+
+def check_port_connectivity(host: str, port: int, timeout: float = 2.0) -> bool:
+    """Check if a port is open and accepting connections using socket."""
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        result = sock.connect_ex((host, port))
+        sock.close()
+        return result == 0
+    except Exception:
+        return False
+
+
+async def check_connect_bridge_discovery(ports: List[int] = None) -> Optional[Dict[str, Any]]:
+    """
+    Check for SecuGen Connect Bridge using SGDISC /v1/discover endpoint.
+    Returns discovery info if found, None if not available.
+    """
+    if ports is None:
+        ports = [4494, 4495, 4496, 4497, 4498, 4499]
+    
+    try:
+        import httpx
+        
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            for port in ports:
+                try:
+                    response = await client.get(f'http://127.0.0.1:{port}/v1/discover')
+                    if response.status_code == 200:
+                        discovery_data = response.json()
+                        return {
+                            'port': port,
+                            'discovery_data': discovery_data,
+                            'endpoint': f'http://127.0.0.1:{port}'
+                        }
+                except Exception:
+                    continue
+        return None
+    except Exception:
+        return None
+
+
+# ============================================================
 # SECUGEN LIVE CAPTURE INTEGRATION
 # ============================================================
 
 @app.get("/api/fingerprint/device-status")
 @app.get("/fingerprint/device-status")
 async def get_device_status():
-    """Check SecuGen Bio Server availability and device status."""
-    try:
-        import httpx
-        
-        # Try to connect to SecuGen Bio Server
-        async with httpx.AsyncClient(verify=False, timeout=5.0) as client:
-            try:
-                # Try HTTPS first
-                response = await client.get('https://localhost:8000/status')
-                if response.status_code == 200:
-                    return {
-                        "available": True,
-                        "device_name": "SecuGen Hamster Pro 20",
-                        "error": None,
-                        "service_url": "https://localhost:8000"
-                    }
-            except Exception:
-                # Fall back to HTTP
-                response = await client.get('http://localhost:8000/status')
-                if response.status_code == 200:
-                    return {
-                        "available": True,
-                        "device_name": "SecuGen Hamster Pro 20", 
-                        "error": None,
-                        "service_url": "http://localhost:8000"
-                    }
-                    
+    """Check SecuGen Connect Bridge and WebAPI Bio Server availability."""
+    
+    # First, try to detect SecuGen Connect Bridge (recommended modern approach)
+    bridge_info = await check_connect_bridge_discovery()
+    
+    if bridge_info:
         return {
-            "available": False,
-            "device_name": None,
-            "error": "SecuGen Bio Server not responding on port 8000"
+            "available": True,
+            "scanner_type": "connect_bridge",
+            "device_name": "SecuGen Scanner (Connect Bridge)",
+            "service_url": bridge_info['endpoint'],
+            "discovery_data": bridge_info.get('discovery_data', {}),
+            "actionable_message": "Scanner ready for capture via Connect Bridge",
+            "error": None
         }
-        
-    except Exception as e:
+    
+    # Fallback: Check for legacy WebAPI Bio Server using socket connection
+    webapi_available = check_port_connectivity('127.0.0.1', 8000, timeout=2.0)
+    
+    if webapi_available:
         return {
-            "available": False,
-            "device_name": None,
-            "error": f"Device status check failed: {str(e)}"
+            "available": True,
+            "scanner_type": "webapi_bioserver", 
+            "device_name": "SecuGen Scanner (Legacy WebAPI Bio Server)",
+            "service_url": "http://127.0.0.1:8000",
+            "discovery_data": {},
+            "actionable_message": "Legacy Bio Server detected. Please install SecuGen Connect Bridge for better compatibility",
+            "error": "Legacy WebAPI Bio Server found but Connect Bridge recommended"
         }
+    
+    # No SecuGen service detected
+    return {
+        "available": False,
+        "scanner_type": None,
+        "device_name": None,
+        "service_url": None,
+        "discovery_data": {},
+        "actionable_message": "Install SecuGen Connect Bridge software and ensure scanner is connected",
+        "error": "No SecuGen service detected. Neither Connect Bridge (ports 4494-4499) nor WebAPI Bio Server (port 8000) is available"
+    }
 
 
 @app.post("/api/fingerprint/capture-and-search")
@@ -217,90 +264,55 @@ async def capture_and_search_fingerprint(
     force_rectification: bool = Form(False, description="Force DDRNet rectification")
 ):
     """
-    Capture fingerprint via SecuGen Bio Server and immediately search gallery.
-    This endpoint acts as a server-side proxy to avoid browser CORS issues.
+    Capture fingerprint via SecuGen Connect Bridge and immediately search gallery.
+    Returns HTTP 503 if only legacy WebAPI Bio Server is available.
     """
     try:
-        import httpx
-        import base64
-        
         if threshold is not None:
             t_thresh = threshold if threshold > 1.0 else (threshold * 100.0 if threshold > 0.0 else MATCH_THRESHOLD)
         else:
             t_thresh = MATCH_THRESHOLD
         
-        # Try multiple SecuGen Bio Server endpoints in order
-        capture_endpoints = [
-            {
-                'url': 'https://localhost:8000/scan',
-                'method': 'POST',
-                'body': {'timeout': 10000, 'format': 'base64', 'quality': 'high'}
-            },
-            {
-                'url': 'https://localhost:8000/capture', 
-                'method': 'POST',
-                'body': {'timeout': 10000, 'captureMode': 'single'}
-            },
-            {
-                'url': 'https://localhost:8000/FPCapture',
-                'method': 'POST', 
-                'body': {'timeout': 10000}
-            },
-            {
-                'url': 'http://localhost:8000/scan',
-                'method': 'POST',
-                'body': {'timeout': 10000, 'format': 'base64'}
-            }
-        ]
+        # Check for SecuGen Connect Bridge first
+        bridge_info = await check_connect_bridge_discovery()
         
-        captured_image = None
-        successful_endpoint = None
-        
-        async with httpx.AsyncClient(verify=False, timeout=15.0) as client:
-            for endpoint in capture_endpoints:
-                try:
-                    response = await client.request(
-                        method=endpoint['method'],
-                        url=endpoint['url'],
-                        json=endpoint['body'],
-                        headers={'Content-Type': 'application/json'}
-                    )
-                    
-                    if response.status_code == 200:
-                        capture_data = response.json()
-                        
-                        # Check for successful capture response
-                        if (capture_data.get('status') == 'success' and 
-                            capture_data.get('image')):
-                            
-                            # Extract base64 image data
-                            image_data_str = capture_data['image']
-                            if ',' in image_data_str:
-                                image_data_str = image_data_str.split(',')[1]
-                            
-                            # Decode base64 to numpy array
-                            image_bytes = base64.b64decode(image_data_str)
-                            image = cv2.imdecode(
-                                np.frombuffer(image_bytes, dtype=np.uint8),
-                                cv2.IMREAD_GRAYSCALE
-                            )
-                            
-                            if image is not None and image.size > 0:
-                                captured_image = image
-                                successful_endpoint = endpoint['url']
-                                break
-                                
-                except Exception as e:
-                    # Continue to next endpoint if this one fails
-                    continue
+        if bridge_info:
+            # Use Connect Bridge for capture
+            captured_image = await capture_via_connect_bridge(bridge_info)
+        else:
+            # Check if only legacy WebAPI Bio Server is available
+            webapi_available = check_port_connectivity('127.0.0.1', 8000, timeout=2.0)
+            
+            if webapi_available:
+                # Return HTTP 503 with clear message about Connect Bridge requirement
+                raise HTTPException(
+                    status_code=503,
+                    detail={
+                        "error": "Legacy WebAPI Bio Server detected but not supported for capture",
+                        "actionable_message": "Please install SecuGen Connect Bridge software for fingerprint capture functionality",
+                        "install_url": "https://www.secugen.com/download-center/",
+                        "detected_service": "WebAPI Bio Server (port 8000)"
+                    }
+                )
+            else:
+                # No SecuGen service available at all
+                raise HTTPException(
+                    status_code=503,
+                    detail={
+                        "error": "No SecuGen service available",
+                        "actionable_message": "Install SecuGen Connect Bridge software and ensure scanner is connected",
+                        "install_url": "https://www.secugen.com/download-center/",
+                        "detected_service": None
+                    }
+                )
         
         if captured_image is None:
             raise HTTPException(
                 status_code=502,
-                detail="Failed to capture fingerprint from SecuGen Bio Server. Please ensure the service is running and a finger is placed on the scanner."
+                detail="Failed to capture fingerprint. Please ensure a finger is placed on the scanner."
             )
         
-        # Run the existing identification pipeline
+        # Run the existing identification pipeline (unchanged)
         result = identify_fingerprint(
             fingerprint_image=captured_image,
             top_n=top_n,
@@ -309,8 +321,8 @@ async def capture_and_search_fingerprint(
         )
         
         # Add capture metadata to result
-        result['capture_method'] = 'SecuGen Bio Server'
-        result['capture_endpoint'] = successful_endpoint
+        result['capture_method'] = 'SecuGen Connect Bridge'
+        result['capture_endpoint'] = bridge_info['endpoint']
         
         return result
         
@@ -321,6 +333,56 @@ async def capture_and_search_fingerprint(
             status_code=500,
             detail=f"Capture and search error: {str(e)}"
         )
+
+
+async def capture_via_connect_bridge(bridge_info: Dict[str, Any]) -> Optional[np.ndarray]:
+    """
+    Capture fingerprint using SecuGen Connect Bridge /v1/fingerprint/capture endpoint.
+    """
+    try:
+        import httpx
+        import base64
+        
+        endpoint_url = f"{bridge_info['endpoint']}/v1/fingerprint/capture"
+        
+        capture_payload = {
+            "timeout": 10000,
+            "format": "png",
+            "quality": "high"
+        }
+        
+        async with httpx.AsyncClient(timeout=15.0) as client:
+            response = await client.post(
+                endpoint_url,
+                json=capture_payload,
+                headers={'Content-Type': 'application/json'}
+            )
+            
+            if response.status_code == 200:
+                capture_data = response.json()
+                
+                if (capture_data.get('status') == 'success' and 
+                    capture_data.get('image')):
+                    
+                    # Extract base64 image data
+                    image_data_str = capture_data['image']
+                    if ',' in image_data_str:
+                        image_data_str = image_data_str.split(',')[1]
+                    
+                    # Decode base64 to numpy array
+                    image_bytes = base64.b64decode(image_data_str)
+                    image = cv2.imdecode(
+                        np.frombuffer(image_bytes, dtype=np.uint8),
+                        cv2.IMREAD_GRAYSCALE
+                    )
+                    
+                    if image is not None and image.size > 0:
+                        return image
+            
+            return None
+            
+    except Exception:
+        return None
 
 
 # ============================================================
