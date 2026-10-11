@@ -313,15 +313,28 @@ async def get_device_status():
     http_available = check_port_connectivity('127.0.0.1', 8000)
     
     if http_available:
-        return {
-            "available": True,
-            "scanner_type": "webapi_http",
-            "device_name": "SecuGen Scanner (WebAPI HTTP)",
-            "service_url": "http://localhost:8000",
-            "capture_endpoint": "/SGIFPCapture",
-            "actionable_message": "Scanner ready - HTTP WebAPI on port 8000",
-            "error": None
-        }
+        # Test actual capture endpoint functionality (Issue 2 fix)
+        endpoint_functional = await test_capture_endpoint_availability()
+        
+        if endpoint_functional:
+            return {
+                "available": True,
+                "scanner_type": "webapi_http",
+                "device_name": "SecuGen Scanner (WebAPI HTTP)",
+                "service_url": "http://localhost:8000",
+                "capture_endpoint": "/SGIFPCapture",
+                "actionable_message": "Scanner ready - HTTP WebAPI on port 8000",
+                "error": None
+            }
+        else:
+            return {
+                "available": False,
+                "scanner_type": None,
+                "device_name": None,
+                "service_url": None,
+                "actionable_message": "SecuGen service running but capture endpoint not responding correctly",
+                "error": "Port 8000 accessible but /SGIFPCapture endpoint failed test"
+            }
     else:
         return {
             "available": False,
@@ -331,6 +344,75 @@ async def get_device_status():
             "actionable_message": "SecuGen Bio Server process running but HTTP WebAPI port not accessible",
             "error": "Process detected but no HTTP WebAPI service listening on port 8000"
         }
+
+
+@app.get("/api/fingerprint/secugen-config")
+async def get_secugen_config():
+    """
+    Provide SecuGen configuration including license string for frontend capture.
+    Issue 1 fix: Replace hardcoded empty license with environment variable.
+    """
+    # Read license string from environment (defaults to empty for evaluation)
+    license_string = os.environ.get('SECUGEN_LIC', '')
+    
+    return {
+        "licstr": license_string,
+        "timeout": 10000,
+        "quality": 50,
+        "fake_detection": 0,
+        "template_format": 0,
+        "image_wsq_rate": 0.75
+    }
+
+
+async def test_capture_endpoint_availability() -> bool:
+    """
+    Test actual SecuGen WebAPI capture endpoint functionality (Issue 2 fix).
+    Makes a minimal test request to verify /SGIFPCapture responds correctly.
+    """
+    try:
+        import httpx
+        
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            # Test the capture endpoint with minimal parameters
+            test_params = {
+                'Timeout': '1000',  # Very short timeout to avoid waiting
+                'Quality': '50',
+                'licstr': '',
+                'fakeDetection': '0',
+                'templateFormat': '0',
+                'imageWSQRate': '0.75'
+            }
+            
+            try:
+                response = await client.post(
+                    'http://127.0.0.1:8000/SGIFPCapture',
+                    data=test_params,
+                    timeout=2.0
+                )
+                
+                # Check if we get a valid SecuGen response structure
+                if response.status_code == 200:
+                    try:
+                        json_response = response.json()
+                        # Valid SecuGen response should have ErrorCode field
+                        return 'ErrorCode' in json_response
+                    except:
+                        return False
+                        
+                # 404 or other HTTP errors indicate endpoint problems
+                return False
+                
+            except (httpx.ConnectError, httpx.TimeoutException):
+                # Connection failures indicate service not properly responding
+                return False
+                
+    except ImportError:
+        # If httpx not available, assume endpoint works if port is open
+        # (this is the fallback behavior that preserves existing functionality)
+        return True
+    except Exception:
+        return False
 
 
 @app.post("/api/fingerprint/capture-and-search")

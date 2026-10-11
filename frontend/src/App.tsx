@@ -284,16 +284,41 @@ export default function App() {
 
   // SecuGen WebAPI JavaScript capture function
   const performSecuGenCapture = async (serviceUrl: string, endpoint: string): Promise<any> => {
-    return new Promise((resolve, reject) => {
-      // Parameters based on SecuGen Demo2.aspx sample
-      const captureParams = {
-        Timeout: 10000,      // 10 second timeout
-        Quality: 50,         // Medium quality (0-100)
-        licstr: '',          // License string (empty for eval)
-        fakeDetection: 0,    // No fake finger detection
-        templateFormat: 0,   // ANSI format
-        imageWSQRate: 0.75   // WSQ compression rate
-      };
+    return new Promise(async (resolve, reject) => {
+      let captureParams: any;
+      
+      try {
+        // Get SecuGen configuration from backend (Issue 1 fix: environment-based license)
+        const configResponse = await fetch(`${API_BASE}/api/fingerprint/secugen-config`);
+        if (!configResponse.ok) {
+          throw new Error('Failed to get SecuGen configuration');
+        }
+        
+        const config = await configResponse.json();
+        
+        // Parameters based on SecuGen Demo2.aspx sample with environment-based license
+        captureParams = {
+          Timeout: config.timeout || 10000,      // 10 second timeout
+          Quality: config.quality || 50,         // Medium quality (0-100)
+          licstr: config.licstr || '',          // License string from environment
+          fakeDetection: config.fake_detection || 0,    // No fake finger detection
+          templateFormat: config.template_format || 0,   // ANSI format
+          imageWSQRate: config.image_wsq_rate || 0.75   // WSQ compression rate
+        };
+        
+      } catch (configError) {
+        // Fallback to hardcoded values if config request fails
+        console.warn('Failed to get SecuGen config, using defaults:', configError);
+        
+        captureParams = {
+          Timeout: 10000,
+          Quality: 50,
+          licstr: '',          // Empty for evaluation mode
+          fakeDetection: 0,
+          templateFormat: 0,
+          imageWSQRate: 0.75
+        };
+      }
       
       const xhr = new XMLHttpRequest();
       const fullUrl = `${serviceUrl}${endpoint}`;
@@ -362,7 +387,7 @@ export default function App() {
       
       // Build form data
       const formParams = Object.entries(captureParams)
-        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(String(value))}`)
         .join('&');
       
       xhr.send(formParams);

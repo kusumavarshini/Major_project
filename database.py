@@ -179,7 +179,12 @@ def init_db(confirm_existing: bool = True) -> Dict[str, Any]:
 
 
 def get_dataset_statistics() -> Dict[str, Any]:
-    """Retrieve actual statistics from MySQL for the dataset and templates."""
+    """
+    Retrieve actual statistics from MySQL for the dataset and templates.
+    
+    NOTE: This queries the application database schema (fingerprint_db).
+    For the actual FVC gallery statistics, use get_gallery_statistics().
+    """
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
@@ -238,6 +243,67 @@ def get_dataset_statistics() -> Dict[str, Any]:
             "failed_templates": 0,
             "pending_templates": 0,
             "distortion_breakdown": {},
+            "error": str(e),
+        }
+
+
+def get_gallery_statistics() -> Dict[str, Any]:
+    """
+    Retrieve statistics from the actual operational FVC gallery (newdb.external_fvc_clean_gallery).
+    This is the gallery used by the live identification pipeline.
+    """
+    try:
+        conn = mysql.connector.connect(
+            host=MYSQL_HOST,
+            port=MYSQL_PORT,
+            user=MYSQL_USER,
+            password=MYSQL_PASSWORD,
+            database="newdb",
+            charset="utf8mb4",
+            use_pure=True,
+        )
+        cursor = conn.cursor(dictionary=True)
+
+        # Gallery templates
+        cursor.execute("""
+            SELECT COUNT(*) AS total_templates
+            FROM external_fvc_clean_gallery
+            WHERE generation_status = 'generated' AND template_data IS NOT NULL
+        """)
+        row_gallery = cursor.fetchone() or {"total_templates": 0}
+
+        cursor.execute("""
+            SELECT MIN(fingerprint_id) AS min_id, MAX(fingerprint_id) AS max_id
+            FROM external_fvc_clean_gallery
+            WHERE generation_status = 'generated' AND template_data IS NOT NULL
+        """)
+        row_range = cursor.fetchone() or {"min_id": None, "max_id": None}
+
+        # Enrolled fingerprints
+        cursor.execute("SELECT COUNT(*) AS enrolled_count FROM enrolled_fingerprints")
+        row_enrolled = cursor.fetchone() or {"enrolled_count": 0}
+
+        cursor.execute("SELECT COUNT(DISTINCT subject_id) AS enrolled_subjects FROM enrolled_fingerprints")
+        row_subj = cursor.fetchone() or {"enrolled_subjects": 0}
+
+        cursor.close()
+        conn.close()
+
+        return {
+            "database": "newdb",
+            "gallery_table": "external_fvc_clean_gallery",
+            "gallery_templates": int(row_gallery["total_templates"]),
+            "gallery_id_range": f"{row_range['min_id']} to {row_range['max_id']}" if row_range['min_id'] else "N/A",
+            "enrolled_fingerprints": int(row_enrolled["enrolled_count"]),
+            "enrolled_subjects": int(row_subj["enrolled_subjects"]),
+            "note": "This is the operational gallery used by the live identification pipeline.",
+        }
+    except Exception as e:
+        return {
+            "database": "newdb",
+            "gallery_templates": 0,
+            "enrolled_fingerprints": 0,
+            "enrolled_subjects": 0,
             "error": str(e),
         }
 

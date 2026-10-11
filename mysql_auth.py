@@ -1,165 +1,239 @@
+
 """
-MySQL Database Authentication & Template Repository for Fingerprint Recognition.
-Queries fingerprints and SourceAFIS templates from normalized schema in fingerprint_db.
+MySQL repository for the existing SourceAFIS gallery and new enrollments.
+The existing 317 gallery templates remain in external_fvc_clean_gallery.
+New enrollments are stored separately in enrolled_fingerprints.
 """
 
-from __future__ import annotations
-
+import os
 import pickle
 import time
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import mysql.connector
+from dotenv import load_dotenv
 
-from database import get_db_connection, MATCH_THRESHOLD
+load_dotenv(Path(__file__).resolve().parent / ".env")
 
-# In-memory cache for fast 1:N searching across gallery templates
 _GALLERY_CACHE: Optional[List[Dict[str, Any]]] = None
-_LAST_CACHE_TIME: float = 0.0
+_LAST_CACHE_TIME = 0.0
 CACHE_TTL_SECONDS = 300.0
 
 
-def get_person_templates(subject_id: str, mysql_password: Optional[str] = None) -> Dict[str, Any]:
-    """
-    Retrieve all enrolled fingerprint templates for a given subject (e.g. 'FAMILY-1/CHILD').
-    """
-    conn = get_db_connection()
-    cursor = conn.cursor(dictionary=True)
-
-    cursor.execute(
-        """
-        SELECT
-            f.fingerprint_id,
-            f.subject_id,
-            f.family_id,
-            f.member_type,
-            f.impression_id,
-            f.filename,
-            f.image_path,
-            f.image_width,
-            f.image_height,
-            t.template_id,
-            t.template_data,
-            t.minutiae_count,
-            t.template_version,
-            t.generation_status
-        FROM fingerprints f
-        JOIN fingerprint_templates t ON f.fingerprint_id = t.fingerprint_id
-        WHERE (f.subject_id = %s OR f.family_id = %s)
-          AND t.generation_status = 'generated'
-        ORDER BY f.impression_id;
-        """,
-        (subject_id, subject_id),
+def _connect():
+    """Connect to the existing gallery database."""
+    return mysql.connector.connect(
+        host=os.getenv("MYSQL_HOST", "localhost"),
+        port=int(os.getenv("MYSQL_PORT", "3306")),
+        user=os.getenv("MYSQL_USER", "root"),
+        password=os.getenv("MYSQL_PASSWORD", ""),
+        database="newdb",
+        charset="utf8mb4",
+        use_pure=True,
     )
 
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
 
-    if not rows:
-        raise ValueError(f"No enrolled fingerprint templates found for subject: {subject_id}")
+def get_person_templates(
+    subject_id: str,
+    mysql_password: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Retrieve all templates enrolled for a subject."""
+    conn = _connect()
+    cursor = conn.cursor(dictionary=True)
+
+    try:
+        cursor.execute(
+            """
+            SELECT enrollment_id, subject_id, filename, image_path,
+                   template_data, minutiae_count, image_width, image_height
+            FROM enrolled_fingerprints
+            WHERE subject_id = %s
+            ORDER BY enrollment_id
+            """,
+            (subject_id,),
+        )
+        rows = cursor.fetchall()
+    finally:
+        cursor.close()
+        conn.close()
 
     templates = []
     for row in rows:
         try:
-            tpl_data = pickle.loads(row["template_data"])
+            tpl = pickle.loads(row["template_data"])
         except Exception:
-            tpl_data = None
+            continue
 
-        if tpl_data is not None:
-            templates.append(
-                {
-                    "fingerprint_id": row["fingerprint_id"],
-                    "template_id": row["template_id"],
-                    "impression_id": row["impression_id"],
-                    "filename": row["filename"],
-                    "image_path": row["image_path"],
-                    "template": tpl_data,
-                    "minutiae_count": row["minutiae_count"],
-                    "image_width": row["image_width"],
-                    "image_height": row["image_height"],
-                }
-            )
+        templates.append({
+            "fingerprint_id": row["enrollment_id"],
+            "filename": row["filename"],
+            "image_path": row["image_path"],
+            "template": tpl,
+            "minutiae_count": row["minutiae_count"],
+            "image_width": row["image_width"],
+            "image_height": row["image_height"],
+        })
+
+    if not templates:
+        raise ValueError(
+            f"No enrolled fingerprint templates found for subject: {subject_id}"
+        )
 
     return {
-        "subject_id": rows[0]["subject_id"],
-        "family_id": rows[0]["family_id"],
-        "member_type": rows[0]["member_type"],
+        "subject_id": subject_id,
+        "family_id": None,
+        "member_type": "ENROLLED",
         "templates": templates,
     }
 
 
-def get_all_gallery_templates(force_refresh: bool = False) -> List[Dict[str, Any]]:
-    """
-    Retrieve all enrolled gallery templates from MySQL for 1:N identification.
-    Uses in-memory cache to guarantee sub-second search times.
-    """
+def get_all_gallery_templates(
+    force_refresh: bool = False,
+) -> List[Dict[str, Any]]:
+    """Load the original gallery and new enrollments for 1:N identification."""
     global _GALLERY_CACHE, _LAST_CACHE_TIME
 
     now = time.time()
-    if not force_refresh and _GALLERY_CACHE is not None and (now - _LAST_CACHE_TIME < CACHE_TTL_SECONDS):
+    if (
+        not force_refresh
+        and _GALLERY_CACHE is not None
+        and now - _LAST_CACHE_TIME < CACHE_TTL_SECONDS
+    ):
         return _GALLERY_CACHE
 
-    conn = get_db_connection()
+    conn = _connect()
     cursor = conn.cursor(dictionary=True)
+    gallery: List[Dict[str, Any]] = []
 
-    cursor.execute(
-        """
-        SELECT
-            f.fingerprint_id,
-            f.subject_id,
-            f.family_id,
-            f.member_type,
-            f.impression_id,
-            f.filename,
-            f.image_path,
-            f.image_width,
-            f.image_height,
-            t.template_id,
-            t.template_data,
-            t.minutiae_count
-        FROM fingerprints f
-        JOIN fingerprint_templates t ON f.fingerprint_id = t.fingerprint_id
-        WHERE t.generation_status = 'generated'
-        ORDER BY f.family_id, f.member_type, f.impression_id;
-        """
-    )
+    try:
+        # Preserve and read all original gallery templates.
+        cursor.execute(
+            """
+            SELECT fingerprint_id, template_data, minutiae_count,
+                   template_version, generation_status
+            FROM external_fvc_clean_gallery
+            WHERE generation_status = 'generated'
+            """
+        )
 
-    rows = cursor.fetchall()
-    cursor.close()
-    conn.close()
+        for row in cursor.fetchall():
+            try:
+                tpl = pickle.loads(row["template_data"])
+            except Exception:
+                continue
 
-    gallery = []
-    for row in rows:
-        try:
-            tpl_data = pickle.loads(row["template_data"])
-        except Exception:
-            continue
+            if not isinstance(tpl, dict) or len(tpl.get("minutiae", [])) < 2:
+                continue
 
-        if tpl_data is not None and tpl_data.get("minutiae_count", 0) > 0:
-            gallery.append(
-                {
-                    "fingerprint_id": row["fingerprint_id"],
-                    "subject_id": row["subject_id"],
-                    "family_id": row["family_id"],
-                    "member_type": row["member_type"],
-                    "impression_id": row["impression_id"],
-                    "filename": row["filename"],
-                    "image_path": row["image_path"],
-                    "minutiae_count": row["minutiae_count"],
-                    "image_width": row["image_width"],
-                    "image_height": row["image_height"],
-                    "template": tpl_data,
-                }
-            )
+            gallery.append({
+                "fingerprint_id": row["fingerprint_id"],
+                "subject_id": f"GALLERY-{row['fingerprint_id']}",
+                "family_id": None,
+                "member_type": "EXISTING_GALLERY",
+                "filename": f"gallery_{row['fingerprint_id']}",
+                "image_path": None,
+                "minutiae_count": row["minutiae_count"],
+                "template": tpl,
+            })
+
+        # Add newly enrolled templates.
+        cursor.execute(
+            """
+            SELECT enrollment_id, subject_id, filename, image_path,
+                   template_data, minutiae_count, image_width, image_height
+            FROM enrolled_fingerprints
+            ORDER BY enrollment_id
+            """
+        )
+
+        for row in cursor.fetchall():
+            try:
+                tpl = pickle.loads(row["template_data"])
+            except Exception:
+                continue
+
+            if not isinstance(tpl, dict) or len(tpl.get("minutiae", [])) < 2:
+                continue
+
+            gallery.append({
+                "fingerprint_id": f"ENROLLED-{row['enrollment_id']}",
+                "subject_id": row["subject_id"],
+                "family_id": None,
+                "member_type": "ENROLLED",
+                "filename": row["filename"],
+                "image_path": row["image_path"],
+                "minutiae_count": row["minutiae_count"],
+                "image_width": row["image_width"],
+                "image_height": row["image_height"],
+                "template": tpl,
+            })
+
+    finally:
+        cursor.close()
+        conn.close()
 
     _GALLERY_CACHE = gallery
-    _LAST_CACHE_TIME = now
+    _LAST_CACHE_TIME = time.time()
     return gallery
 
 
 def clear_gallery_cache():
-    """Clear in-memory gallery cache."""
+    """Force the next 1:N search to reload the database gallery."""
     global _GALLERY_CACHE, _LAST_CACHE_TIME
     _GALLERY_CACHE = None
     _LAST_CACHE_TIME = 0.0
+
+
+def enroll_fingerprint(
+    subject_id: str,
+    filename: str,
+    image_path: str,
+    image_width: int,
+    image_height: int,
+    template: Dict[str, Any],
+) -> int:
+    """Save a new SourceAFIS template without modifying the original gallery."""
+    if not subject_id.strip():
+        raise ValueError("Subject ID cannot be empty.")
+
+    minutiae_count = int(template.get("minutiae_count", 0))
+    if minutiae_count < 2:
+        raise ValueError("Not enough minutiae detected. Please capture again.")
+
+    serialized = pickle.dumps(template, protocol=pickle.HIGHEST_PROTOCOL)
+
+    conn = _connect()
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(
+            """
+            INSERT INTO enrolled_fingerprints (
+                subject_id, filename, image_path, template_data,
+                minutiae_count, template_version, image_width, image_height
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                subject_id.strip(),
+                filename,
+                image_path,
+                serialized,
+                minutiae_count,
+                template.get("version", "sourceafis_v1"),
+                image_width,
+                image_height,
+            ),
+        )
+        enrollment_id = cursor.lastrowid
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cursor.close()
+        conn.close()
+
+    clear_gallery_cache()
+    return int(enrollment_id)

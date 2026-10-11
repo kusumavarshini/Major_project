@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecuGen Direct Integration Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .success { background-color: #d4edda; border: 1px solid #c3e6cb; color: #155724; }
+        .error { background-color: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; }
+        .info { background-color: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        .log { 
+            background: #f8f9fa; 
+            border: 1px solid #dee2e6; 
+            padding: 10px; 
+            height: 400px; 
+            overflow-y: auto; 
+            font-family: monospace; 
+            font-size: 12px; 
+            white-space: pre-wrap;
+        }
+        button { 
+            padding: 10px 15px; 
+            margin: 5px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            background: #007bff; 
+            color: white; 
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { background: #6c757d; cursor: not-allowed; }
+        .scan-button { background: #28a745; font-size: 16px; padding: 15px 25px; }
+        .scan-button:hover { background: #1e7e34; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 SecuGen Direct Integration Test</h1>
+        
+        <div id="status" class="status info">Initializing SecuGen WebAPI test...</div>
+        
+        <div class="controls">
+            <button onclick="testConnection()">Test Connection</button>
+            <button onclick="getDeviceInfo()">Device Info</button>
+            <button id="scanBtn" onclick="scanFingerprint()" class="scan-button" disabled>
+                🖐️ Scan Fingerprint
+            </button>
+            <button onclick="clearLog()">Clear Log</button>
+        </div>
+        
+        <div id="results"></div>
+        
+        <h3>Test Log</h3>
+        <div id="log" class="log">Ready to test SecuGen WebAPI direct integration...\n</div>
+    </div>
+
+    <script>
+        let isConnected = false;
+        
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+        
+        function setStatus(message, type = 'info') {
+            const statusDiv = document.getElementById('status');
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        function clearLog() {
+            document.getElementById('log').textContent = '';
+        }
+        
+        async function testConnection() {
+            log('Testing SecuGen Bio Server connection...');
+            setStatus('Testing connection...', 'info');
+            
+            // Test documented SecuGen WebAPI patterns
+            const tests = [
+                {
+                    name: 'HTTPS Root',
+                    url: 'https://localhost:8000/',
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                },
+                {
+                    name: 'HTTP Root',
+                    url: 'http://localhost:8000/',
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                },
+                {
+                    name: 'HTTPS Status',
+                    url: 'https://localhost:8000/status',
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                },
+                {
+                    name: 'HTTPS Device',
+                    url: 'https://localhost:8000/device',
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                }
+            ];
+            
+            for (const test of tests) {
+                try {
+                    log(`Testing ${test.name}: ${test.url}`);
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => {
+                        controller.abort();
+                    }, 3000);
+                    
+                    const response = await fetch(test.url, {
+                        method: test.method,
+                        headers: test.headers,
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    log(`${test.name}: Status ${response.status} ${response.statusText}`);
+                    
+                    if (response.ok) {
+                        const contentType = response.headers.get('content-type');
+                        log(`${test.name}: Content-Type: ${contentType || 'none'}`);
+                        
+                        try {
+                            const text = await response.text();
+                            log(`${test.name}: Response: ${text.substring(0, 200)}${text.length > 200 ? '...' : ''}`);
+                            
+                            if (contentType && contentType.includes('json')) {
+                                const data = JSON.parse(text);
+                                log(`${test.name}: Parsed JSON: ${JSON.stringify(data, null, 2)}`);
+                            }
+                            
+                            isConnected = true;
+                            setStatus('✅ Connected to SecuGen Bio Server', 'success');
+                            document.getElementById('scanBtn').disabled = false;
+                            return true;
+                            
+                        } catch (e) {
+                            log(`${test.name}: Response parsing error: ${e.message}`);
+                        }
+                    }
+                    
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        log(`${test.name}: Timeout (3s)`);
+                    } else {
+                        log(`${test.name}: Error - ${error.message}`);
+                    }
+                }
+            }
+            
+            setStatus('❌ Cannot connect to SecuGen Bio Server', 'error');
+            return false;
+        }
+        
+        async function getDeviceInfo() {
+            log('Getting device information...');
+            
+            const endpoints = [
+                'https://localhost:8000/info',
+                'https://localhost:8000/device/info', 
+                'https://localhost:8000/device/status',
+                'https://localhost:8000/reader/info',
+                'http://localhost:8000/info'
+            ];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    log(`Trying: ${endpoint}`);
+                    
+                    const controller = new AbortController();
+                    setTimeout(() => controller.abort(), 2000);
+                    
+                    const response = await fetch(endpoint, {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' },
+                        signal: controller.signal
+                    });
+                    
+                    log(`Status: ${response.status}`);
+                    
+                    if (response.ok) {
+                        const text = await response.text();
+                        log(`Device info response: ${text}`);
+                        return JSON.parse(text);
+                    }
+                    
+                } catch (error) {
+                    log(`Error: ${error.message}`);
+                }
+            }
+            
+            log('No device info endpoint found');
+        }
+        
+        async function scanFingerprint() {
+            log('=== STARTING FINGERPRINT CAPTURE ===');
+            setStatus('🖐️ Place your finger on the scanner...', 'info');
+            
+            document.getElementById('scanBtn').disabled = true;
+            document.getElementById('scanBtn').textContent = '⏳ Scanning...';
+            
+            // Try various documented scan endpoints and methods
+            const scanMethods = [
+                {
+                    name: 'HTTPS POST /scan',
+                    url: 'https://localhost:8000/scan',
+                    method: 'POST',
+                    body: JSON.stringify({
+                        timeout: 10000,
+                        quality: 'high',
+                        format: 'base64'
+                    })
+                },
+                {
+                    name: 'HTTPS POST /capture',  
+                    url: 'https://localhost:8000/capture',
+                    method: 'POST',
+                    body: JSON.stringify({
+                        timeout: 10000,
+                        captureMode: 'single'
+                    })
+                },
+                {
+                    name: 'HTTPS POST /fingerprint/capture',
+                    url: 'https://localhost:8000/fingerprint/capture',
+                    method: 'POST',
+                    body: JSON.stringify({
+                        timeout: 10000
+                    })
+                },
+                {
+                    name: 'HTTPS GET /scan (simple)',
+                    url: 'https://localhost:8000/scan?timeout=10000',
+                    method: 'GET',
+                    body: null
+                },
+                {
+                    name: 'HTTP POST /scan',
+                    url: 'http://localhost:8000/scan',
+                    method: 'POST', 
+                    body: JSON.stringify({
+                        timeout: 10000
+                    })
+                }
+            ];
+            
+            let scanResult = null;
+            
+            for (const scanMethod of scanMethods) {
+                try {
+                    log(`Attempting: ${scanMethod.name}`);
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => {
+                        controller.abort();
+                        log(`${scanMethod.name}: Request timeout`);
+                    }, 12000); // 12 second timeout
+                    
+                    const options = {
+                        method: scanMethod.method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        signal: controller.signal
+                    };
+                    
+                    if (scanMethod.body) {
+                        options.body = scanMethod.body;
+                    }
+                    
+                    const response = await fetch(scanMethod.url, options);
+                    clearTimeout(timeoutId);
+                    
+                    log(`${scanMethod.name}: HTTP ${response.status} ${response.statusText}`);
+                    
+                    if (response.ok) {
+                        const contentType = response.headers.get('content-type');
+                        log(`${scanMethod.name}: Content-Type: ${contentType}`);
+                        
+                        const responseText = await response.text();
+                        log(`${scanMethod.name}: Response length: ${responseText.length} bytes`);
+                        
+                        if (contentType && contentType.includes('json')) {
+                            scanResult = JSON.parse(responseText);
+                            log(`${scanMethod.name}: ✅ SUCCESS - Fingerprint captured!`);
+                            log(`Scan result: ${JSON.stringify(scanResult, null, 2)}`);
+                        } else if (responseText.length > 0) {
+                            log(`${scanMethod.name}: Non-JSON response: ${responseText.substring(0, 100)}...`);
+                        }
+                        
+                        if (scanResult) break; // Success - exit loop
+                        
+                    } else {
+                        const errorText = await response.text();
+                        log(`${scanMethod.name}: Error response: ${errorText}`);
+                    }
+                    
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        log(`${scanMethod.name}: Request timed out`);
+                    } else {
+                        log(`${scanMethod.name}: Error - ${error.message}`);
+                    }
+                }
+            }
+            
+            // Reset button
+            document.getElementById('scanBtn').disabled = false;
+            document.getElementById('scanBtn').textContent = '🖐️ Scan Fingerprint';
+            
+            if (scanResult) {
+                setStatus('✅ Fingerprint captured successfully!', 'success');
+                displayScanResult(scanResult);
+                log('=== FINGERPRINT CAPTURE SUCCESSFUL ===');
+                return scanResult;
+            } else {
+                setStatus('❌ Fingerprint capture failed - all methods unsuccessful', 'error');
+                log('=== FINGERPRINT CAPTURE FAILED ===');
+                return null;
+            }
+        }
+        
+        function displayScanResult(result) {
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <h3>✅ Scan Results</h3>
+                <div class="status success">
+                    <strong>Fingerprint captured successfully!</strong>
+                </div>
+                <pre>${JSON.stringify(result, null, 2)}</pre>
+            `;
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            log('SecuGen Direct Integration Test initialized');
+            log('Bio Server should be running on port 8000');
+            log('Click "Test Connection" to verify service availability');
+        });
+    </script>
+</body>
+</html>

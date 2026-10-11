@@ -76,10 +76,10 @@ DEVICE = torch.device(
 # -------------------------------------------------------------------------
 
 CLASSIFIER_CHECKPOINT = Path(
-    "experiments/classifier_hard_negative/best_model.pth"
+    "experiments/classifier_fvc_adapted/best_model.pth"
 )
 
-CLASSIFIER_THRESHOLD = 0.60
+CLASSIFIER_THRESHOLD = 0.885
 
 
 # -------------------------------------------------------------------------
@@ -87,7 +87,7 @@ CLASSIFIER_THRESHOLD = 0.60
 # -------------------------------------------------------------------------
 
 DDRNET_CHECKPOINT = Path(
-    "experiments/ddrnet_baseline/best_model.pth"
+    "experiments/ddrnet_fvc_finetuned/best_model.pth"
 )
 
 
@@ -423,14 +423,15 @@ def run_ddrnet_rectification(
         ),
     )
 
+    # Convention: map_x = grid + displacement (matches authentication.py and training)
     map_x = (
         grid_x
-        - pred_dx_full
+        + pred_dx_full
     )
 
     map_y = (
         grid_y
-        - pred_dy_full
+        + pred_dy_full
     )
 
     rectified = cv2.remap(
@@ -438,7 +439,7 @@ def run_ddrnet_rectification(
         map_x,
         map_y,
         interpolation=cv2.INTER_LINEAR,
-        borderMode=cv2.BORDER_CONSTANT,
+        borderMode=cv2.BORDER_REPLICATE,
         borderValue=255,
     )
 

@@ -1,0 +1,5 @@
+{
+  "threshold": 0.8849999999999999,
+  "validation_f1": 1.0,
+  "best_epoch": 2
+}

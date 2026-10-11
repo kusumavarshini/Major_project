@@ -1,0 +1,36 @@
+{
+  "id": "FEAT-002",
+  "type": "feat",
+  "description": "Remove manual upload UI components from frontend App.tsx to create scanner-only interface while preserving scanner controls and status display",
+  "status": "completed",
+  "steps": [
+    "Remove drag-and-drop upload area JSX elements from App.tsx including onDragOver, onDrop handlers and the drag drop div",
+    "Remove file input element and related click handler from fileInputRef usage",
+    "Remove handleImageChange function and file selection logic",
+    "Remove selectedImage state variable and related image preview logic for uploaded files", 
+    "Remove 'OR' divider section between scan button and upload area",
+    "Remove upload-related instructional text including 'Drag & Drop Fingerprint Image', file type labels, and browse instructions",
+    "Remove UploadCloud icon import and usage",
+    "Update handleIdentify function to be disabled/removed since no file upload capability remains",
+    "Keep scanner status indicator, Scan Fingerprint button, device connection status display, and scanning progress feedback",
+    "Keep rectification mode controls and threshold slider as they apply to scanner workflow",
+    "Update UI layout to show clean scanner-focused interface without upload placeholders"
+  ],
+  "acceptance_criteria": [
+    "No drag-and-drop area visible in the UI",
+    "No file browse/select controls visible", 
+    "No upload-related text or instructions visible",
+    "Scan Fingerprint button remains prominent and functional",
+    "Device status indicator still shows connection state",
+    "Rectification controls remain available for scanner workflow",
+    "UI layout is clean without empty spaces where upload controls were removed"
+  ],
+  "verification": [
+    "Run 'npm run dev' in frontend directory and check UI loads without errors",
+    "Verify no drag-drop area, file browser, or upload text visible on Identification tab",
+    "Confirm Scan Fingerprint button, device status, and rectification controls still present and functional",
+    "Test scanner workflow still works end-to-end (if hardware available)"
+  ],
+  "blocked_reason": null,
+  "findings": "Successfully removed all manual upload UI components from App.tsx:\n- Removed UploadCloud icon import\n- Removed selectedImage state variable and related logic\n- Removed fileInputRef and file input element\n- Removed handleImageChange, handleDragOver, handleDrop functions\n- Removed handleIdentify function (no longer needed for file uploads)\n- Removed drag-and-drop upload area JSX elements\n- Removed 'OR' divider between scanner and upload sections\n- Removed all upload-related instructional text and file type labels\n- Updated UI to be scanner-focused with clean layout\n- Kept Scan Fingerprint button, device status indicator, rectification controls, and threshold slider\n- Updated description text to be scanner-focused\n- Added scanner instructions panel when device is ready\n- Frontend builds successfully without compilation errors\n- Commit 16c504b created with all changes"
+}

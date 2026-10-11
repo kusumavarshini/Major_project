@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SecuGen WebAPI Direct Test</title>
+</head>
+<body>
+    <h1>SecuGen WebAPI Direct Integration Test</h1>
+    
+    <div id="status">Testing SecuGen WebAPI...</div>
+    <button id="testBtn" onclick="testSecuGenAPI()">Test API Connection</button>
+    <button id="scanBtn" onclick="attemptScan()" disabled>Attempt Scan</button>
+    
+    <div id="log" style="margin-top: 20px; font-family: monospace; white-space: pre-wrap; background: #f0f0f0; padding: 10px; height: 400px; overflow-y: auto;"></div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.textContent += `[${timestamp}] ${message}\n`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(message);
+        }
+
+        async function testSecuGenAPI() {
+            log('Starting SecuGen WebAPI connectivity test...');
+            
+            // Test various endpoints and methods documented by SecuGen
+            const tests = [
+                {
+                    name: 'HTTPS Base',
+                    method: 'GET',
+                    url: 'https://localhost:8000',
+                    headers: { 'Accept': 'application/json' }
+                },
+                {
+                    name: 'HTTPS Info',
+                    method: 'GET', 
+                    url: 'https://localhost:8000/info',
+                    headers: { 'Accept': 'application/json' }
+                },
+                {
+                    name: 'HTTPS Device Status',
+                    method: 'GET',
+                    url: 'https://localhost:8000/device/status',
+                    headers: { 'Accept': 'application/json' }
+                },
+                {
+                    name: 'HTTP Base',
+                    method: 'GET',
+                    url: 'http://localhost:8000',
+                    headers: { 'Accept': 'application/json' }
+                },
+                {
+                    name: 'HTTPS POST Scan',
+                    method: 'POST',
+                    url: 'https://localhost:8000/scan',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({ timeout: 5000 })
+                }
+            ];
+            
+            for (const test of tests) {
+                try {
+                    log(`Testing ${test.name}: ${test.method} ${test.url}`);
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => {
+                        controller.abort();
+                        log(`${test.name}: Timeout (3s)`);
+                    }, 3000);
+                    
+                    const options = {
+                        method: test.method,
+                        headers: test.headers,
+                        signal: controller.signal
+                    };
+                    
+                    if (test.body) {
+                        options.body = test.body;
+                    }
+                    
+                    const response = await fetch(test.url, options);
+                    clearTimeout(timeoutId);
+                    
+                    log(`${test.name}: Status ${response.status} ${response.statusText}`);
+                    
+                    if (response.ok) {
+                        const contentType = response.headers.get('content-type');
+                        log(`${test.name}: Content-Type: ${contentType}`);
+                        
+                        if (contentType && contentType.includes('application/json')) {
+                            const data = await response.json();
+                            log(`${test.name}: JSON Response: ${JSON.stringify(data, null, 2)}`);
+                        } else {
+                            const text = await response.text();
+                            log(`${test.name}: Text Response: ${text.substring(0, 200)}${text.length > 200 ? '...' : ''}`);
+                        }
+                        
+                        document.getElementById('status').textContent = 'SecuGen API Connected!';
+                        document.getElementById('scanBtn').disabled = false;
+                        return true;
+                    }
+                    
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        log(`${test.name}: Request timeout`);
+                    } else {
+                        log(`${test.name}: Error - ${error.message}`);
+                    }
+                }
+            }
+            
+            document.getElementById('status').textContent = 'SecuGen API connection failed';
+            return false;
+        }
+
+        async function attemptScan() {
+            log('Attempting fingerprint scan...');
+            
+            const scanEndpoints = [
+                {
+                    name: 'HTTPS Scan',
+                    method: 'POST',
+                    url: 'https://localhost:8000/scan',
+                    body: JSON.stringify({
+                        timeout: 10000,
+                        quality: 'high',
+                        format: 'base64'
+                    })
+                },
+                {
+                    name: 'HTTPS Capture',
+                    method: 'POST',
+                    url: 'https://localhost:8000/capture',
+                    body: JSON.stringify({
+                        timeout: 10000
+                    })
+                },
+                {
+                    name: 'HTTP Scan',
+                    method: 'POST',
+                    url: 'http://localhost:8000/scan',
+                    body: JSON.stringify({
+                        timeout: 10000
+                    })
+                }
+            ];
+            
+            for (const endpoint of scanEndpoints) {
+                try {
+                    log(`Trying ${endpoint.name}...`);
+                    
+                    const controller = new AbortController();
+                    const timeoutId = setTimeout(() => {
+                        controller.abort();
+                    }, 12000);
+                    
+                    const response = await fetch(endpoint.url, {
+                        method: endpoint.method,
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: endpoint.body,
+                        signal: controller.signal
+                    });
+                    
+                    clearTimeout(timeoutId);
+                    
+                    log(`${endpoint.name}: Status ${response.status}`);
+                    
+                    if (response.ok) {
+                        const data = await response.json();
+                        log(`${endpoint.name}: SUCCESS!`);
+                        log(`Response: ${JSON.stringify(data, null, 2)}`);
+                        return data;
+                    } else {
+                        const errorText = await response.text();
+                        log(`${endpoint.name}: Error response: ${errorText}`);
+                    }
+                    
+                } catch (error) {
+                    if (error.name === 'AbortError') {
+                        log(`${endpoint.name}: Timeout`);
+                    } else {
+                        log(`${endpoint.name}: Error - ${error.message}`);
+                    }
+                }
+            }
+            
+            log('All scan attempts failed');
+        }
+
+        // Test if there are any global SecuGen JavaScript objects
+        function checkGlobalObjects() {
+            log('Checking for global SecuGen objects...');
+            
+            const checks = [
+                'FP_scan_display',
+                'SecuGenWebAPI',
+                'SecuGen',
+                'sgfplib'
+            ];
+            
+            for (const check of checks) {
+                if (typeof window[check] !== 'undefined') {
+                    log(`Found global object: ${check}`);
+                    log(`Type: ${typeof window[check]}`);
+                    return true;
+                } else {
+                    log(`Not found: ${check}`);
+                }
+            }
+            
+            return false;
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Page loaded, initializing tests...');
+            checkGlobalObjects();
+            log('Ready to test SecuGen API. Click "Test API Connection" to begin.');
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,7 @@
+{
+  "task_id": "task-secugen-scanner-fix",
+  "task_description": "Fix SecuGen scanner connection issues by replacing fake REST API calls with proper SecuGen Connect Bridge detection and remove manual upload UI from frontend",
+  "status": "pending",
+  "feature_order": ["FEAT-001", "FEAT-002"],
+  "blocked_reason": null
+}

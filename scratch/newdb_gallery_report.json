@@ -1,0 +1,119 @@
+{
+  "source_images": 317,
+  "processed": 317,
+  "total_rows": 317,
+  "successful_count": 317,
+  "failed_count": 0,
+  "failed_ids": [],
+  "min_m": 13,
+  "max_m": 80,
+  "avg_m": 48.58044164037855,
+  "min_sz": 774,
+  "max_sz": 3454,
+  "avg_sz": 2197.217665615142,
+  "total_sz": 696518,
+  "versions": [
+    "sourceafis_v1"
+  ],
+  "missing_fids": [],
+  "duplicate_fids": 0,
+  "null_templates": 0,
+  "zero_minutiae": 0,
+  "deser_success": 317,
+  "deser_failures": 0,
+  "count_mismatches": 0,
+  "sample_reports": {
+    "1": {
+      "fid": 1,
+      "filename": "1.png",
+      "db_minutiae": 49,
+      "deser_minutiae": 49,
+      "size_bytes": 2214,
+      "version": "sourceafis_v1",
+      "status": "Success"
+    },
+    "2": {
+      "fid": 2,
+      "filename": "2.png",
+      "db_minutiae": 59,
+      "deser_minutiae": 59,
+      "size_bytes": 2614,
+      "version": "sourceafis_v1",
+      "status": "Success"
+    },
+    "100": {
+      "fid": 100,
+      "filename": "100.png",
+      "db_minutiae": 55,
+      "deser_minutiae": 55,
+      "size_bytes": 2454,
+      "version": "sourceafis_v1",
+      "status": "Success"
+    },
+    "200": {
+      "fid": 200,
+      "filename": "200.png",
+      "db_minutiae": 31,
+      "deser_minutiae": 31,
+      "size_bytes": 1494,
+      "version": "sourceafis_v1",
+      "status": "Success"
+    },
+    "317": {
+      "fid": 317,
+      "filename": "317.png",
+      "db_minutiae": 48,
+      "deser_minutiae": 48,
+      "size_bytes": 2174,
+      "version": "sourceafis_v1",
+      "status": "Success"
+    }
+  },
+  "self_match_results": [
+    {
+      "query_id": 1,
+      "expected_id": 1,
+      "top1_id": 1,
+      "top1_raw": 318.5,
+      "expected_raw": 318.5,
+      "expected_rank": 1,
+      "runtime_ms": 5839.820384979248
+    },
+    {
+      "query_id": 2,
+      "expected_id": 2,
+      "top1_id": 2,
+      "top1_raw": 383.5,
+      "expected_raw": 383.5,
+      "expected_rank": 1,
+      "runtime_ms": 7237.274169921875
+    },
+    {
+      "query_id": 100,
+      "expected_id": 100,
+      "top1_id": 100,
+      "top1_raw": 357.5,
+      "expected_raw": 357.5,
+      "expected_rank": 1,
+      "runtime_ms": 7331.730604171753
+    },
+    {
+      "query_id": 200,
+      "expected_id": 200,
+      "top1_id": 200,
+      "top1_raw": 201.5,
+      "expected_raw": 201.5,
+      "expected_rank": 1,
+      "runtime_ms": 5159.238338470459
+    },
+    {
+      "query_id": 317,
+      "expected_id": 317,
+      "top1_id": 317,
+      "top1_raw": 312.0,
+      "expected_raw": 312.0,
+      "expected_rank": 1,
+      "runtime_ms": 6298.714637756348
+    }
+  ]
+}

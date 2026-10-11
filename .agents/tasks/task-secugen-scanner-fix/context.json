@@ -1,0 +1,15 @@
+{
+  "project_type": "React + TypeScript frontend with Python FastAPI backend, fingerprint biometric system",
+  "language": "TypeScript (frontend), Python (backend)",
+  "build_system": "npm + Vite for frontend, direct Python execution for backend",
+  "test_framework": "No formal test framework discovered, manual testing required",
+  "build_command": "npm run build (in frontend directory)",
+  "test_command": "manual testing with SecuGen hardware required",
+  "verification_instructions": "1) Check backend starts without errors, 2) Test /api/fingerprint/device-status endpoint returns proper response structure, 3) Test frontend UI shows only scanner interface without upload controls, 4) Verify scanner status updates properly in UI",
+  "snapshot_or_generated_files": "frontend/dist/* build artifacts get created by npm run build",
+  "environment_constraints": "SecuGen Bio Server on port 8000 or SecuGen Connect Bridge on ports 4494-4499 required for hardware testing. FastAPI backend runs on port 8000.",
+  "contribution_requirements": "Preserve existing authentication.py identify_fingerprint() pipeline, maintain all existing recognition logic, keep backward compatibility",
+  "key_patterns": "FastAPI endpoints use @app.get/@app.post decorators, React functional components with useState hooks, async/await for API calls, cn() helper for conditional CSS classes",
+  "relevant_files": ["backend_api.py", "frontend/src/App.tsx", "authentication.py", ".agents/tasks/secugen-final-report.md"],
+  "directory_structure": "Root contains Python backend files, frontend/ contains React TypeScript app, experiments/ for outputs, .agents/tasks/ for workflow artifacts"
+}

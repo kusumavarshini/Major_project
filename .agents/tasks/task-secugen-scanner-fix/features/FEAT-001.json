@@ -1,0 +1,31 @@
+{
+  "id": "FEAT-001",
+  "type": "fix",
+  "description": "Fix backend SecuGen scanner integration by replacing fake REST API calls with proper SecuGen Connect Bridge detection and WebAPI Bio Server fallback",
+  "status": "completed",
+  "steps": [
+    "Replace /api/fingerprint/device-status endpoint logic in backend_api.py to first check for SecuGen Connect Bridge on ports 4494-4499 via HTTP GET to /v1/discover",
+    "Add fallback check for old WebAPI Bio Server on port 8000 using socket connection test (not fake REST calls)",
+    "Update device-status response format to include scanner_type field ('connect_bridge', 'webapi_bioserver', or null), actionable_message field, and proper error handling",
+    "Replace /api/fingerprint/capture-and-search endpoint logic to use Connect Bridge /v1/fingerprint/capture if available",
+    "Add proper error response (HTTP 503) when only old WebAPI Bio Server detected, with actionable message telling user to install SecuGen Connect Bridge",
+    "Remove the fake REST endpoint attempts (/status, /scan, /capture, /FPCapture) that don't exist on WebAPI Bio Server",
+    "Add socket-based port availability checking function for the WebAPI Bio Server fallback detection",
+    "Update error messages to be more specific about which software needs to be installed/configured"
+  ],
+  "acceptance_criteria": [
+    "/api/fingerprint/device-status returns proper JSON with available, scanner_type, actionable_message, and error fields",
+    "Connect Bridge detection works via actual SGDISC /v1/discover calls on ports 4494-4499",
+    "WebAPI Bio Server detection uses socket connection test instead of fake REST calls",
+    "Capture endpoint returns HTTP 503 with clear message when only old Bio Server detected",
+    "All existing identify_fingerprint() pipeline integration preserved unchanged"
+  ],
+  "verification": [
+    "Start backend with 'python backend_api.py' and check no errors",
+    "Test 'curl http://127.0.0.1:8000/api/fingerprint/device-status' returns expected JSON structure",
+    "Verify response changes appropriately when SecuGen Connect Bridge/Bio Server available vs unavailable",
+    "Test capture endpoint returns proper HTTP 503 when appropriate hardware/software not available"
+  ],
+  "blocked_reason": null,
+  "findings": "Successfully implemented proper SecuGen Connect Bridge detection using SGDISC /v1/discover endpoint on ports 4494-4499. Added socket-based WebAPI Bio Server fallback detection on port 8000. Updated device-status response format with scanner_type ('connect_bridge', 'webapi_bioserver', null) and actionable_message fields. Implemented HTTP 503 error response in capture endpoint when only legacy Bio Server detected, with clear installation instructions. Removed all fake REST endpoint attempts. All existing identify_fingerprint() pipeline integration preserved unchanged. Testing confirmed proper detection of legacy Bio Server and appropriate actionable messages when Connect Bridge not available."
+}
