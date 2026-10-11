@@ -1,11 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Fingerprint,
-  UploadCloud,
   CheckCircle2,
   AlertCircle,
   RefreshCw,
-  Search,
   Activity,
   Layers,
   ShieldCheck,
@@ -127,9 +125,6 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<'recognition' | 'analytics' | 'dataset'>('recognition');
 
   // Recognition state
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
   const [searchResult, setSearchResult] = useState<SearchResult | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [currentStage, setCurrentStage] = useState<number>(0);
@@ -146,8 +141,6 @@ export default function App() {
   const [metrics, setMetrics] = useState<EvaluationMetrics | null>(null);
   const [isEvaluating, setIsEvaluating] = useState(false);
   const [evalLimit, setEvalLimit] = useState<number>(50);
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Fetch initial stats and metrics
   useEffect(() => {
@@ -171,7 +164,7 @@ export default function App() {
   };
 
   const handleScanFingerprint = async () => {
-    if (isScanInProgress || isProcessing) return;
+    if (isScanInProgress) return;
     
     setIsScanInProgress(true);
     setScanState('checking');
@@ -223,11 +216,6 @@ export default function App() {
       
       const result: SearchResult = await captureResponse.json();
       
-      // Set captured image preview from result
-      if (result.original_image_url) {
-        setImagePreview(`${API_BASE}${result.original_image_url}`);
-      }
-      
       setCurrentStage(5);
       setSearchResult(result);
       setScanState('done');
@@ -261,79 +249,6 @@ export default function App() {
       }
     } catch {
       // Backend may be starting up
-    }
-  };
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedImage(file);
-      setImagePreview(URL.createObjectURL(file));
-      setSearchResult(null);
-      setError(null);
-      setCurrentStage(0);
-    }
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    const file = e.dataTransfer.files?.[0];
-    if (file && file.type.startsWith('image/')) {
-      setSelectedImage(file);
-      setImagePreview(URL.createObjectURL(file));
-      setSearchResult(null);
-      setError(null);
-      setCurrentStage(0);
-    }
-  };
-
-  const handleIdentify = async () => {
-    if (!selectedImage) {
-      setError('Please select or drop a fingerprint image to identify.');
-      return;
-    }
-
-    setIsProcessing(true);
-    setError(null);
-    setSearchResult(null);
-    setCurrentStage(1);
-
-    // Progress stage simulator
-    const stageTimer1 = setTimeout(() => setCurrentStage(2), 350);
-    const stageTimer2 = setTimeout(() => setCurrentStage(3), 800);
-    const stageTimer3 = setTimeout(() => setCurrentStage(4), 1400);
-
-    const formData = new FormData();
-    formData.append('fingerprint', selectedImage);
-    formData.append('top_n', '5');
-    formData.append('threshold', customThreshold.toString());
-    formData.append('force_rectification', (rectificationMode === 'force').toString());
-
-    try {
-      const response = await fetch(`${API_BASE}/fingerprint/search`, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        throw new Error(errData.detail || 'Biometric search failed on server.');
-      }
-
-      const data: SearchResult = await response.json();
-      setCurrentStage(5);
-      setSearchResult(data);
-    } catch (err: any) {
-      setError(err.message || 'An unexpected error occurred during fingerprint identification.');
-    } finally {
-      clearTimeout(stageTimer1);
-      clearTimeout(stageTimer2);
-      clearTimeout(stageTimer3);
-      setIsProcessing(false);
     }
   };
 
@@ -437,21 +352,21 @@ export default function App() {
                 Fingerprint Recognition
               </h2>
               <p className="text-slate-400 text-sm">
-                Upload a single fingerprint image to identify the closest matching fingerprint in the family dataset.
+                Scan a fingerprint using the SecuGen scanner to identify the closest matching fingerprint in the family dataset.
                 The system automatically handles distortion detection, DDRNet rectification, and 1:N SourceAFIS matching.
               </p>
             </div>
 
-            {/* Upload Area */}
+            {/* Scanner Area */}
             <div className="max-w-2xl mx-auto">
               {/* SecuGen Scan Button */}
               <div className="mb-6">
                 <button
                   onClick={handleScanFingerprint}
-                  disabled={isScanInProgress || isProcessing}
+                  disabled={isScanInProgress}
                   className={cn(
                     'w-full px-6 py-3 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all shadow-md mb-4',
-                    !isScanInProgress && !isProcessing && deviceAvailable
+                    !isScanInProgress && deviceAvailable
                       ? 'bg-gradient-to-r from-blue-600 to-indigo-500 hover:from-blue-500 hover:to-indigo-400 text-white shadow-blue-600/20'
                       : 'bg-slate-800 text-slate-500 cursor-not-allowed'
                   )}
@@ -484,68 +399,19 @@ export default function App() {
                      deviceAvailable ? 'Scanner connected' : 'Scanner not available'}
                   </span>
                 </div>
-                
-                {/* OR Divider */}
-                <div className="flex items-center gap-4 my-6">
-                  <div className="flex-1 h-px bg-slate-800"></div>
-                  <span className="text-xs text-slate-500 px-3">OR</span>
-                  <div className="flex-1 h-px bg-slate-800"></div>
+              </div>
+
+              {/* Scanner Instructions */}
+              {!isScanInProgress && deviceAvailable && (
+                <div className="mb-6 p-4 rounded-xl bg-slate-900/40 border border-slate-800 text-center">
+                  <p className="text-sm text-slate-300 mb-2">
+                    Scanner Ready
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    Click the scan button above and place your finger on the SecuGen scanner when prompted.
+                  </p>
                 </div>
-              </div>
-
-              <div
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className={cn(
-                  'border-2 border-dashed rounded-2xl p-8 text-center cursor-pointer transition-all',
-                  imagePreview
-                    ? 'border-emerald-500/50 bg-slate-900/40'
-                    : 'border-slate-800 hover:border-slate-700 bg-slate-900/20 hover:bg-slate-900/40'
-                )}
-              >
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  onChange={handleImageChange}
-                  accept="image/png,image/jpeg,image/bmp"
-                  className="hidden"
-                />
-
-                {imagePreview ? (
-                  <div className="flex flex-col items-center space-y-4">
-                    <div className="relative group">
-                      <img
-                        src={imagePreview}
-                        alt="Fingerprint Preview"
-                        className="h-44 w-44 object-contain rounded-xl border border-slate-700 bg-black/60 shadow-inner"
-                      />
-                      <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity rounded-xl">
-                        <p className="text-xs font-medium text-white">Click or Drop to Replace</p>
-                      </div>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-medium text-slate-200">{selectedImage?.name}</p>
-                      <p className="text-xs text-slate-500">{(selectedImage?.size ? selectedImage.size / 1024 : 0).toFixed(1)} KB</p>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-4 py-4">
-                    <div className="h-16 w-16 mx-auto rounded-full bg-slate-800/80 flex items-center justify-center text-slate-400">
-                      <UploadCloud className="h-8 w-8" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-slate-200">
-                        Drag & Drop Fingerprint Image
-                      </p>
-                      <p className="text-xs text-slate-500 mt-1">or click to browse your computer</p>
-                    </div>
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-800 text-slate-400 text-xs font-mono">
-                      <span>PNG, JPG, BMP</span>
-                    </div>
-                  </div>
-                )}
-              </div>
+              )}
 
               {/* Development / Debug Mode Controls */}
               <div className="mt-4 p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-3">
@@ -594,9 +460,9 @@ export default function App() {
                 </div>
               </div>
 
-              {/* Threshold & Action Controls */}
-              <div className="mt-4 flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
-                <div className="flex items-center gap-3 w-full sm:w-auto">
+              {/* Threshold Controls */}
+              <div className="mt-4 flex flex-col sm:flex-row items-center justify-center gap-4 bg-slate-900/50 p-4 rounded-xl border border-slate-800">
+                <div className="flex items-center gap-3 w-full sm:w-auto justify-center">
                   <Sliders className="h-4 w-4 text-slate-400" />
                   <label className="text-xs text-slate-400 whitespace-nowrap">
                     Matcher Threshold: <span className="text-emerald-400 font-mono font-medium">{customThreshold}</span>
@@ -611,29 +477,6 @@ export default function App() {
                     className="w-32 accent-emerald-500"
                   />
                 </div>
-
-                <button
-                  onClick={handleIdentify}
-                  disabled={!selectedImage || isProcessing}
-                  className={cn(
-                    'w-full sm:w-auto px-6 py-2.5 rounded-xl font-medium text-sm flex items-center justify-center gap-2 transition-all shadow-md',
-                    selectedImage && !isProcessing
-                      ? 'bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-white shadow-emerald-600/20'
-                      : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                  )}
-                >
-                  {isProcessing ? (
-                    <>
-                      <RefreshCw className="h-4 w-4 animate-spin text-white" />
-                      <span>Identifying...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Search className="h-4 w-4" />
-                      <span>FIND MATCH</span>
-                    </>
-                  )}
-                </button>
               </div>
 
               {error && (
@@ -645,7 +488,7 @@ export default function App() {
             </div>
 
             {/* Live Processing Stages */}
-            {(isProcessing || isScanInProgress) && (
+            {isScanInProgress && (
               <div className="max-w-2xl mx-auto bg-slate-900/60 border border-slate-800 rounded-2xl p-6 space-y-4">
                 <h3 className="text-xs font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                   <Activity className="h-4 w-4 text-emerald-400 animate-pulse" />
@@ -654,7 +497,7 @@ export default function App() {
 
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                   {[
-                    { label: isScanInProgress ? 'Device checked' : 'Image uploaded', stage: 1 },
+                    { label: 'Device capture', stage: 1 },
                     { label: 'Preprocessing', stage: 2 },
                     { label: 'Distortion correction', stage: 3 },
                     { label: 'Template generation', stage: 4 },
