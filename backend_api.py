@@ -10,6 +10,7 @@ import os
 import sys
 import socket
 import base64
+import binascii
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -167,6 +168,30 @@ async def enroll_fingerprint_api(
 # SECUGEN HELPER FUNCTIONS
 # ============================================================
 
+def check_secugen_process_running() -> bool:
+    """
+    Check if SecuGen Bio Server process (sgibiosrv.exe) is actually running.
+    This prevents false positives from other services using port 8000.
+    """
+    try:
+        import psutil
+        # Look for sgibiosrv.exe process
+        for proc in psutil.process_iter(['name']):
+            if proc.info['name'] and 'sgibiosrv.exe' in proc.info['name'].lower():
+                return True
+        return False
+    except ImportError:
+        # If psutil not available, use subprocess as fallback on Windows
+        try:
+            import subprocess
+            result = subprocess.run(['tasklist', '/FI', 'IMAGENAME eq sgibiosrv.exe'], 
+                                  capture_output=True, text=True, timeout=3)
+            return 'sgibiosrv.exe' in result.stdout
+        except Exception:
+            # If all process detection fails, return False to be safe
+            return False
+
+
 def check_port_connectivity(host: str, port: int, timeout: float = 2.0) -> bool:
     """Check if a port is open and accepting connections using socket."""
     try:
@@ -179,6 +204,51 @@ def check_port_connectivity(host: str, port: int, timeout: float = 2.0) -> bool:
         return False
 
 
+async def validate_webapi_bioserver(host: str = '127.0.0.1', port: int = 8000) -> bool:
+    """
+    Validate that port 8000 is actually SecuGen WebAPI Bio Server, not another service.
+    Returns True if confirmed as SecuGen Bio Server, False otherwise.
+    Enhanced validation to prevent false positives from other services on port 8000.
+    """
+    try:
+        import httpx
+    except ImportError:
+        # If httpx not available, use process-based detection as fallback
+        return check_secugen_process_running()
+        
+    try:
+        # First check basic connectivity
+        if not check_port_connectivity(host, port, timeout=1.0):
+            return False
+        
+        # Additional validation: Check if SecuGen process is actually running
+        if not check_secugen_process_running():
+            return False
+            
+        # Attempt HTTP request to verify service behavior
+        async with httpx.AsyncClient(timeout=3.0) as client:
+            try:
+                # Try root path - SecuGen Bio Server has specific timeout behavior
+                response = await client.get(f'http://{host}:{port}/', timeout=2.0)
+                # Any HTTP response indicates a web server, but need process confirmation above
+                return response.status_code is not None
+            except httpx.HTTPStatusError:
+                # HTTP errors are still valid responses, means it's a web server
+                # Combined with process check, this is likely SecuGen
+                return True
+            except (httpx.ConnectTimeout, httpx.ReadTimeout):
+                # Timeouts are actually expected behavior for SecuGen Bio Server
+                # If process is running and we get timeout, it's likely SecuGen
+                return True
+            except httpx.ConnectError:
+                # Connection refused suggests not an HTTP server
+                return False
+                
+    except Exception:
+        # Fall back to process-based detection only
+        return check_secugen_process_running()
+
+
 async def check_connect_bridge_discovery(ports: List[int] = None) -> Optional[Dict[str, Any]]:
     """
     Check for SecuGen Connect Bridge using SGDISC /v1/discover endpoint.
@@ -189,7 +259,11 @@ async def check_connect_bridge_discovery(ports: List[int] = None) -> Optional[Di
     
     try:
         import httpx
+    except ImportError:
+        # httpx not available, cannot check Connect Bridge
+        return None
         
+    try:
         async with httpx.AsyncClient(timeout=3.0) as client:
             for port in ports:
                 try:
@@ -213,131 +287,131 @@ async def check_connect_bridge_discovery(ports: List[int] = None) -> Optional[Di
 # ============================================================
 
 # Global flag to prevent concurrent capture requests
+import threading
+_capture_lock = threading.Lock()
 _capture_in_progress = False
 
 @app.get("/api/fingerprint/device-status")
 @app.get("/fingerprint/device-status")
 async def get_device_status():
-    """Check SecuGen Connect Bridge and WebAPI Bio Server availability."""
+    """Check SecuGen WebAPI service availability for JavaScript capture."""
     
-    # First, try to detect SecuGen Connect Bridge (recommended modern approach)
-    bridge_info = await check_connect_bridge_discovery()
+    # Check for SecuGen process first (hardware confirmation)
+    process_running = check_secugen_process_running()
     
-    if bridge_info:
+    if not process_running:
+        return {
+            "available": False,
+            "scanner_type": None,
+            "device_name": None,
+            "service_url": None,
+            "actionable_message": "SecuGen Bio Server service is not running. Please start sgibiosrv.exe",
+            "error": "SecuGen Bio Server process (sgibiosrv.exe) not detected"
+        }
+    
+    # Check if HTTP WebAPI service is listening on port 8000
+    http_available = check_port_connectivity('127.0.0.1', 8000)
+    
+    if http_available:
         return {
             "available": True,
-            "scanner_type": "connect_bridge",
-            "device_name": "SecuGen Scanner (Connect Bridge)",
-            "service_url": bridge_info['endpoint'],
-            "discovery_data": bridge_info.get('discovery_data', {}),
-            "actionable_message": "Scanner ready for capture via Connect Bridge",
+            "scanner_type": "webapi_http",
+            "device_name": "SecuGen Scanner (WebAPI HTTP)",
+            "service_url": "http://localhost:8000",
+            "capture_endpoint": "/SGIFPCapture",
+            "actionable_message": "Scanner ready - HTTP WebAPI on port 8000",
             "error": None
         }
-    
-    # Fallback: Check for legacy WebAPI Bio Server using socket connection
-    webapi_available = check_port_connectivity('127.0.0.1', 8000, timeout=2.0)
-    
-    if webapi_available:
+    else:
         return {
-            "available": True,
-            "scanner_type": "webapi_bioserver", 
-            "device_name": "SecuGen Scanner (Legacy WebAPI Bio Server)",
-            "service_url": "http://127.0.0.1:8000",
-            "discovery_data": {},
-            "actionable_message": "Legacy Bio Server detected. Please install SecuGen Connect Bridge for better compatibility",
-            "error": "Legacy WebAPI Bio Server found but Connect Bridge recommended"
+            "available": False,
+            "scanner_type": None,
+            "device_name": None,
+            "service_url": None,
+            "actionable_message": "SecuGen Bio Server process running but HTTP WebAPI port not accessible",
+            "error": "Process detected but no HTTP WebAPI service listening on port 8000"
         }
-    
-    # No SecuGen service detected
-    return {
-        "available": False,
-        "scanner_type": None,
-        "device_name": None,
-        "service_url": None,
-        "discovery_data": {},
-        "actionable_message": "Install SecuGen Connect Bridge software and ensure scanner is connected",
-        "error": "No SecuGen service detected. Neither Connect Bridge (ports 4494-4499) nor WebAPI Bio Server (port 8000) is available"
-    }
 
 
 @app.post("/api/fingerprint/capture-and-search")
 @app.post("/fingerprint/capture-and-search")
-async def capture_and_search_fingerprint(
+@app.post("/api/fingerprint/capture-from-bmp")
+@app.post("/fingerprint/capture-from-bmp")
+async def capture_from_bmp_base64(
+    bmp_base64: str = Form(..., description="Base64-encoded BMP image from SecuGen WebAPI"),
+    image_width: int = Form(..., description="Image width from SecuGen capture"),
+    image_height: int = Form(..., description="Image height from SecuGen capture"),
+    image_quality: int = Form(..., description="Image quality from SecuGen capture"),
     top_n: int = Form(5, description="Number of top candidates to return"),
     threshold: Optional[float] = Form(None, description="Custom matching threshold"),
     force_rectification: bool = Form(False, description="Force DDRNet rectification")
 ):
     """
-    Capture fingerprint via SecuGen Connect Bridge and immediately search gallery.
-    Returns HTTP 503 if only legacy WebAPI Bio Server is available.
+    Process fingerprint captured via SecuGen WebAPI JavaScript and perform identification.
+    Expects BMPBase64 data from SGIFPCapture endpoint response.
     """
     global _capture_in_progress
     
-    # Prevent concurrent capture requests
-    if _capture_in_progress:
-        raise HTTPException(
-            status_code=409,
-            detail="Another capture request is already in progress. Please wait."
-        )
+    # Prevent concurrent capture requests with thread-safe locking
+    with _capture_lock:
+        if _capture_in_progress:
+            raise HTTPException(
+                status_code=409,
+                detail="Another capture request is already in progress. Please wait."
+            )
+        _capture_in_progress = True
     
     try:
-        _capture_in_progress = True
-        
         if threshold is not None:
             t_thresh = threshold if threshold > 1.0 else (threshold * 100.0 if threshold > 0.0 else MATCH_THRESHOLD)
         else:
             t_thresh = MATCH_THRESHOLD
         
-        # Check for SecuGen Connect Bridge first
-        bridge_info = await check_connect_bridge_discovery()
-        
-        if bridge_info:
-            # Use Connect Bridge for capture
-            captured_image = await capture_via_connect_bridge(bridge_info)
-        else:
-            # Check if only legacy WebAPI Bio Server is available
-            webapi_available = check_port_connectivity('127.0.0.1', 8000, timeout=2.0)
+        # Validate and decode BMP Base64 data
+        try:
+            # Remove data URL prefix if present
+            if bmp_base64.startswith('data:image/bmp;base64,'):
+                bmp_base64 = bmp_base64.split(',')[1]
             
-            if webapi_available:
-                # Return HTTP 503 with clear message about Connect Bridge requirement
-                raise HTTPException(
-                    status_code=503,
-                    detail={
-                        "error": "Legacy WebAPI Bio Server detected but not supported for capture",
-                        "actionable_message": "Please install SecuGen Connect Bridge software for fingerprint capture functionality",
-                        "install_url": "https://www.secugen.com/download-center/",
-                        "detected_service": "WebAPI Bio Server (port 8000)"
-                    }
-                )
-            else:
-                # No SecuGen service available at all
-                raise HTTPException(
-                    status_code=503,
-                    detail={
-                        "error": "No SecuGen service available",
-                        "actionable_message": "Install SecuGen Connect Bridge software and ensure scanner is connected",
-                        "install_url": "https://www.secugen.com/download-center/",
-                        "detected_service": None
-                    }
-                )
-        
-        if captured_image is None:
+            # Validate base64 format and length
+            if not bmp_base64 or len(bmp_base64) < 100:
+                raise ValueError("BMP Base64 data too short or empty")
+                
+            # Decode base64 to bytes
+            image_bytes = base64.b64decode(bmp_base64, validate=True)
+            
+            # Validate decoded data length
+            if len(image_bytes) < 1000:  # BMP header + minimal image data
+                raise ValueError("Decoded BMP data too small")
+            
+            # Decode BMP image using OpenCV
+            image_array = np.frombuffer(image_bytes, dtype=np.uint8)
+            captured_image = cv2.imdecode(image_array, cv2.IMREAD_GRAYSCALE)
+            
+            # Validate decoded image
+            if captured_image is None or captured_image.size == 0:
+                raise ValueError("Failed to decode BMP image data")
+            
+            # Validate image dimensions match reported values
+            actual_height, actual_width = captured_image.shape
+            if abs(actual_width - image_width) > 10 or abs(actual_height - image_height) > 10:
+                print(f"Warning: Image dimension mismatch. Reported: {image_width}x{image_height}, Actual: {actual_width}x{actual_height}")
+                
+        except (base64.binascii.Error, ValueError, cv2.error) as e:
             raise HTTPException(
-                status_code=502,
+                status_code=400,
                 detail={
-                    "error": "Fingerprint capture failed", 
-                    "actionable_message": "Please ensure a finger is placed firmly on the scanner and try again",
+                    "error": "Invalid BMP Base64 data",
+                    "actionable_message": f"Failed to decode captured fingerprint image: {str(e)}",
                     "possible_causes": [
-                        "No finger detected on scanner",
-                        "Finger placement timeout (10 seconds)",
-                        "Poor finger contact with scanner surface",
-                        "Scanner hardware malfunction"
+                        "Corrupted capture data from SecuGen WebAPI",
+                        "Invalid Base64 encoding",
+                        "Unsupported BMP format"
                     ]
                 }
             )
         
         # Run the existing identification pipeline (unchanged)
-        # Ensure threshold is correctly passed through to identify_fingerprint()
         result = identify_fingerprint(
             fingerprint_image=captured_image,
             top_n=top_n,
@@ -346,8 +420,9 @@ async def capture_and_search_fingerprint(
         )
         
         # Add capture metadata to result
-        result['capture_method'] = 'SecuGen Connect Bridge'
-        result['capture_endpoint'] = bridge_info['endpoint']
+        result['capture_method'] = 'SecuGen WebAPI JavaScript'
+        result['capture_dimensions'] = f"{image_width}x{image_height}"
+        result['capture_quality'] = image_quality
         
         return result
         
@@ -356,10 +431,11 @@ async def capture_and_search_fingerprint(
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Capture and search error: {str(e)}"
+            detail=f"Capture processing error: {str(e)}"
         )
     finally:
-        _capture_in_progress = False
+        with _capture_lock:
+            _capture_in_progress = False
 
 
 async def capture_via_connect_bridge(bridge_info: Dict[str, Any]) -> Optional[np.ndarray]:
@@ -369,7 +445,11 @@ async def capture_via_connect_bridge(bridge_info: Dict[str, Any]) -> Optional[np
     try:
         import httpx
         import base64
+    except ImportError as e:
+        # Required dependencies not available
+        raise Exception(f"Missing required dependency: {e}")
         
+    try:
         endpoint_url = f"{bridge_info['endpoint']}/v1/fingerprint/capture"
         
         capture_payload = {
@@ -397,22 +477,38 @@ async def capture_via_connect_bridge(bridge_info: Dict[str, Any]) -> Optional[np
                         image_data_str = image_data_str.split(',')[1]
                     
                     try:
-                        # Validate base64 format before attempting to decode
-                        image_bytes = base64.b64decode(image_data_str, validate=True)
+                        # Comprehensive base64 validation and decoding
                         
-                        if len(image_bytes) == 0:
+                        # 1. Basic format validation
+                        if not image_data_str or len(image_data_str) < 4:
                             return None
                             
+                        # 2. Check for valid base64 characters
+                        if not all(c in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=' for c in image_data_str):
+                            return None
+                        
+                        # 3. Validate base64 format and decode
+                        image_bytes = base64.b64decode(image_data_str, validate=True)
+                        
+                        # 4. Check decoded data length (minimum reasonable image size)
+                        if len(image_bytes) < 100:  # Too small to be a valid image
+                            return None
+                            
+                        # 5. Attempt image decoding and validate result
                         image = cv2.imdecode(
                             np.frombuffer(image_bytes, dtype=np.uint8),
                             cv2.IMREAD_GRAYSCALE
                         )
                         
+                        # 6. Validate decoded image properties
                         if image is not None and image.size > 0:
-                            return image
+                            # Check for reasonable image dimensions
+                            height, width = image.shape
+                            if 50 <= width <= 2000 and 50 <= height <= 2000:
+                                return image
                             
-                    except (base64.binascii.Error, ValueError) as e:
-                        # Handle malformed base64 or invalid image data
+                    except (base64.binascii.Error, ValueError, cv2.error) as e:
+                        # Handle malformed base64, invalid image data, or CV2 decode errors
                         return None
             
             return None

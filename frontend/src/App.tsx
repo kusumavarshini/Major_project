@@ -135,6 +135,7 @@ export default function App() {
   const [scanState, setScanState] = useState<'idle' | 'checking' | 'scanning' | 'done' | 'error'>('idle');
   const [isScanInProgress, setIsScanInProgress] = useState(false);
   const [deviceAvailable, setDeviceAvailable] = useState<boolean | null>(null);
+  const [deviceStatusMessage, setDeviceStatusMessage] = useState<string>('');
 
   // Analytics & Dataset state
   const [stats, setStats] = useState<DatasetStats | null>(null);
@@ -147,6 +148,10 @@ export default function App() {
     checkDeviceStatus();
     fetchStats();
     fetchMetrics();
+    
+    // Set up periodic device status refresh (Issue 3 fix)
+    const statusInterval = setInterval(checkDeviceStatus, 30000); // Check every 30 seconds
+    return () => clearInterval(statusInterval);
   }, []);
 
   const checkDeviceStatus = async () => {
@@ -155,11 +160,14 @@ export default function App() {
       if (response.ok) {
         const data = await response.json();
         setDeviceAvailable(data.available);
+        setDeviceStatusMessage(data.actionable_message || data.error || '');
       } else {
         setDeviceAvailable(false);
+        setDeviceStatusMessage('Failed to check scanner status');
       }
     } catch {
       setDeviceAvailable(false);
+      setDeviceStatusMessage('Cannot connect to scanner service');
     }
   };
 
@@ -183,42 +191,88 @@ export default function App() {
       const statusData = await statusResponse.json();
       
       if (!statusData.available) {
-        throw new Error(statusData.error || 'Scanner not connected. Check SecuGen Bio Server.');
+        throw new Error(statusData.actionable_message || statusData.error || 'Scanner not available');
       }
       
-      // Start capture
+      // Extract service details for capture
+      const serviceUrl = statusData.service_url;
+      const captureEndpoint = statusData.capture_endpoint || '/SGIFPCapture';
+      
+      // Start capture using SecuGen WebAPI JavaScript
       setScanState('scanning');
       setCurrentStage(1);
-      
-      const formData = new FormData();
-      formData.append('top_n', '5');
-      formData.append('threshold', customThreshold.toString());
-      formData.append('force_rectification', (rectificationMode === 'force').toString());
       
       // Progress stage simulator
       const stageTimer1 = setTimeout(() => setCurrentStage(2), 1000);
       const stageTimer2 = setTimeout(() => setCurrentStage(3), 2000);
       const stageTimer3 = setTimeout(() => setCurrentStage(4), 3000);
       
-      const captureResponse = await fetch(`${API_BASE}/api/fingerprint/capture-and-search`, {
-        method: 'POST',
-        body: formData,
-      });
-      
-      clearTimeout(stageTimer1);
-      clearTimeout(stageTimer2);
-      clearTimeout(stageTimer3);
-      
-      if (!captureResponse.ok) {
-        const errData = await captureResponse.json().catch(() => ({}));
-        throw new Error(errData.detail || 'Fingerprint capture failed');
+      try {
+        // Call SecuGen WebAPI capture
+        const captureResult = await performSecuGenCapture(serviceUrl, captureEndpoint);
+        
+        clearTimeout(stageTimer1);
+        clearTimeout(stageTimer2);
+        clearTimeout(stageTimer3);
+        
+        // Send captured BMP data to backend for processing
+        const formData = new FormData();
+        formData.append('bmp_base64', captureResult.BMPBase64);
+        formData.append('image_width', captureResult.ImageWidth.toString());
+        formData.append('image_height', captureResult.ImageHeight.toString());
+        formData.append('image_quality', captureResult.ImageQuality.toString());
+        formData.append('top_n', '5');
+        formData.append('threshold', customThreshold.toString());
+        formData.append('force_rectification', (rectificationMode === 'force').toString());
+        
+        const processResponse = await fetch(`${API_BASE}/api/fingerprint/capture-from-bmp`, {
+          method: 'POST',
+          body: formData,
+        });
+        
+        if (!processResponse.ok) {
+          const errData = await processResponse.json().catch(() => ({}));
+          
+          // Handle both string and structured error formats
+          let errorMessage = 'Fingerprint processing failed';
+          
+          if (errData.detail) {
+            if (typeof errData.detail === 'string') {
+              errorMessage = errData.detail;
+            } else if (typeof errData.detail === 'object') {
+              errorMessage = errData.detail.actionable_message || errData.detail.error || errorMessage;
+            }
+          }
+          
+          throw new Error(errorMessage);
+        }
+        
+        const result: SearchResult = await processResponse.json();
+        
+        setCurrentStage(5);
+        setSearchResult(result);
+        setScanState('done');
+        
+      } catch (captureError: any) {
+        clearTimeout(stageTimer1);
+        clearTimeout(stageTimer2);
+        clearTimeout(stageTimer3);
+        
+        // Handle SecuGen capture errors specifically
+        const errorMessage = captureError.message || 'Unknown capture error';
+        
+        if (errorMessage.startsWith('CAPTURE_TIMEOUT:')) {
+          // Special handling for capture timeouts - show retry option
+          const timeoutMessage = errorMessage.replace('CAPTURE_TIMEOUT:', '');
+          throw new Error(`${timeoutMessage}. Click scan again to retry.`);
+        } else if (errorMessage.includes('Network error') || errorMessage.includes('Network timeout')) {
+          throw new Error('Cannot connect to SecuGen service. Please ensure SecuGen Bio Server is running.');
+        } else if (errorMessage.includes('endpoint not found')) {
+          throw new Error('SecuGen WebAPI endpoint not available. Please verify the service configuration.');
+        } else {
+          throw captureError;
+        }
       }
-      
-      const result: SearchResult = await captureResponse.json();
-      
-      setCurrentStage(5);
-      setSearchResult(result);
-      setScanState('done');
       
     } catch (err: any) {
       setScanState('error');
@@ -226,6 +280,93 @@ export default function App() {
     } finally {
       setIsScanInProgress(false);
     }
+  };
+
+  // SecuGen WebAPI JavaScript capture function
+  const performSecuGenCapture = async (serviceUrl: string, endpoint: string): Promise<any> => {
+    return new Promise((resolve, reject) => {
+      // Parameters based on SecuGen Demo2.aspx sample
+      const captureParams = {
+        Timeout: 10000,      // 10 second timeout
+        Quality: 50,         // Medium quality (0-100)
+        licstr: '',          // License string (empty for eval)
+        fakeDetection: 0,    // No fake finger detection
+        templateFormat: 0,   // ANSI format
+        imageWSQRate: 0.75   // WSQ compression rate
+      };
+      
+      const xhr = new XMLHttpRequest();
+      const fullUrl = `${serviceUrl}${endpoint}`;
+      
+      xhr.open('POST', fullUrl, true);
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      
+      // Handle network errors
+      xhr.onerror = () => {
+        reject(new Error(`Network error connecting to ${fullUrl}. Please ensure SecuGen Bio Server is running.`));
+      };
+      
+      xhr.ontimeout = () => {
+        reject(new Error('Network timeout: SecuGen service did not respond within 12 seconds'));
+      };
+      
+      xhr.timeout = 12000; // Allow extra time for network overhead
+      
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              
+              // Check for SecuGen error codes - improved mapping
+              if (response.ErrorCode !== 0) {
+                const errorMessages: { [key: number]: string } = {
+                  1: 'Scanner not found or not connected',
+                  2: 'Capture timeout - no finger detected',
+                  3: 'Poor image quality - please try again',
+                  4: 'License validation failed',
+                  5: 'Scanner hardware error',
+                  6: 'Fake finger detected',
+                  10004: 'Capture timeout - ensure finger is placed firmly on scanner'
+                };
+                
+                const errorMessage = errorMessages[response.ErrorCode] || `SecuGen error code: ${response.ErrorCode}`;
+                
+                // Special handling for capture timeout (ErrorCode 10004) - this is the most common case
+                if (response.ErrorCode === 10004 || response.ErrorCode === 2) {
+                  reject(new Error(`CAPTURE_TIMEOUT:${errorMessage}`));
+                } else {
+                  reject(new Error(errorMessage));
+                }
+                return;
+              }
+              
+              // Validate required response fields
+              if (!response.BMPBase64 || !response.ImageWidth || !response.ImageHeight) {
+                reject(new Error('Invalid response from SecuGen WebAPI - missing image data'));
+                return;
+              }
+              
+              resolve(response);
+              
+            } catch (parseError) {
+              reject(new Error('Failed to parse SecuGen response: ' + parseError));
+            }
+          } else if (xhr.status === 404) {
+            reject(new Error('SecuGen WebAPI endpoint not found. Please verify the service is running and the endpoint is correct.'));
+          } else {
+            reject(new Error(`SecuGen WebAPI request failed with HTTP status ${xhr.status}`));
+          }
+        }
+      };
+      
+      // Build form data
+      const formParams = Object.entries(captureParams)
+        .map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`)
+        .join('&');
+      
+      xhr.send(formParams);
+    });
   };
 
   const fetchStats = async () => {
@@ -388,17 +529,33 @@ export default function App() {
                 </button>
                 
                 {/* Device Status Indicator */}
-                <div className="flex items-center justify-center gap-2 text-xs">
-                  <div className={cn(
-                    "h-2 w-2 rounded-full",
-                    deviceAvailable === true ? "bg-emerald-500" : 
-                    deviceAvailable === false ? "bg-red-500" : "bg-amber-500 animate-pulse"
-                  )} />
-                  <span className="text-slate-400">
-                    {deviceAvailable === null ? 'Checking scanner...' :
-                     deviceAvailable ? 'Scanner connected' : 'Scanner not available'}
-                  </span>
+                <div className="flex items-center justify-between gap-2 text-xs">
+                  <div className="flex items-center gap-2">
+                    <div className={cn(
+                      "h-2 w-2 rounded-full",
+                      deviceAvailable === true ? "bg-emerald-500" : 
+                      deviceAvailable === false ? "bg-red-500" : "bg-amber-500 animate-pulse"
+                    )} />
+                    <span className="text-slate-400">
+                      {deviceAvailable === null ? 'Checking scanner...' :
+                       deviceAvailable ? 'Scanner connected' : 'Scanner not available'}
+                    </span>
+                  </div>
+                  <button
+                    onClick={checkDeviceStatus}
+                    className="p-1 rounded-md hover:bg-slate-800 transition-colors"
+                    title="Refresh scanner status"
+                  >
+                    <RefreshCw className="h-3 w-3 text-slate-500" />
+                  </button>
                 </div>
+                
+                {/* Device Status Message */}
+                {deviceStatusMessage && (
+                  <div className="mt-2 p-2 rounded-lg bg-slate-800/50 border border-slate-700/50 text-xs text-slate-300 text-center">
+                    {deviceStatusMessage}
+                  </div>
+                )}
               </div>
 
               {/* Scanner Instructions */}
