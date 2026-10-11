@@ -9,6 +9,7 @@ from __future__ import annotations
 import os
 import sys
 import socket
+import base64
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -211,6 +212,9 @@ async def check_connect_bridge_discovery(ports: List[int] = None) -> Optional[Di
 # SECUGEN LIVE CAPTURE INTEGRATION
 # ============================================================
 
+# Global flag to prevent concurrent capture requests
+_capture_in_progress = False
+
 @app.get("/api/fingerprint/device-status")
 @app.get("/fingerprint/device-status")
 async def get_device_status():
@@ -267,7 +271,18 @@ async def capture_and_search_fingerprint(
     Capture fingerprint via SecuGen Connect Bridge and immediately search gallery.
     Returns HTTP 503 if only legacy WebAPI Bio Server is available.
     """
+    global _capture_in_progress
+    
+    # Prevent concurrent capture requests
+    if _capture_in_progress:
+        raise HTTPException(
+            status_code=409,
+            detail="Another capture request is already in progress. Please wait."
+        )
+    
     try:
+        _capture_in_progress = True
+        
         if threshold is not None:
             t_thresh = threshold if threshold > 1.0 else (threshold * 100.0 if threshold > 0.0 else MATCH_THRESHOLD)
         else:
@@ -309,10 +324,20 @@ async def capture_and_search_fingerprint(
         if captured_image is None:
             raise HTTPException(
                 status_code=502,
-                detail="Failed to capture fingerprint. Please ensure a finger is placed on the scanner."
+                detail={
+                    "error": "Fingerprint capture failed", 
+                    "actionable_message": "Please ensure a finger is placed firmly on the scanner and try again",
+                    "possible_causes": [
+                        "No finger detected on scanner",
+                        "Finger placement timeout (10 seconds)",
+                        "Poor finger contact with scanner surface",
+                        "Scanner hardware malfunction"
+                    ]
+                }
             )
         
         # Run the existing identification pipeline (unchanged)
+        # Ensure threshold is correctly passed through to identify_fingerprint()
         result = identify_fingerprint(
             fingerprint_image=captured_image,
             top_n=top_n,
@@ -333,6 +358,8 @@ async def capture_and_search_fingerprint(
             status_code=500,
             detail=f"Capture and search error: {str(e)}"
         )
+    finally:
+        _capture_in_progress = False
 
 
 async def capture_via_connect_bridge(bridge_info: Dict[str, Any]) -> Optional[np.ndarray]:
@@ -364,20 +391,29 @@ async def capture_via_connect_bridge(bridge_info: Dict[str, Any]) -> Optional[np
                 if (capture_data.get('status') == 'success' and 
                     capture_data.get('image')):
                     
-                    # Extract base64 image data
+                    # Extract base64 image data with validation
                     image_data_str = capture_data['image']
                     if ',' in image_data_str:
                         image_data_str = image_data_str.split(',')[1]
                     
-                    # Decode base64 to numpy array
-                    image_bytes = base64.b64decode(image_data_str)
-                    image = cv2.imdecode(
-                        np.frombuffer(image_bytes, dtype=np.uint8),
-                        cv2.IMREAD_GRAYSCALE
-                    )
-                    
-                    if image is not None and image.size > 0:
-                        return image
+                    try:
+                        # Validate base64 format before attempting to decode
+                        image_bytes = base64.b64decode(image_data_str, validate=True)
+                        
+                        if len(image_bytes) == 0:
+                            return None
+                            
+                        image = cv2.imdecode(
+                            np.frombuffer(image_bytes, dtype=np.uint8),
+                            cv2.IMREAD_GRAYSCALE
+                        )
+                        
+                        if image is not None and image.size > 0:
+                            return image
+                            
+                    except (base64.binascii.Error, ValueError) as e:
+                        # Handle malformed base64 or invalid image data
+                        return None
             
             return None
             
