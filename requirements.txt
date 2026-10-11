@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+mysql-connector-python
+opencv-python
+numpy
+Pillow
+httpx
