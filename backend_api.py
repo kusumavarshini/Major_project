@@ -204,11 +204,11 @@ def check_port_connectivity(host: str, port: int, timeout: float = 2.0) -> bool:
         return False
 
 
-async def validate_webapi_bioserver(host: str = '127.0.0.1', port: int = 8000) -> bool:
+async def validate_webapi_bioserver(host: str = 'localhost', port: int = 8443) -> bool:
     """
-    Validate that port 8000 is actually SecuGen WebAPI Bio Server, not another service.
+    Validate that port 8443 is actually SecuGen WebAPI Bio Server, not another service.
     Returns True if confirmed as SecuGen Bio Server, False otherwise.
-    Enhanced validation to prevent false positives from other services on port 8000.
+    Enhanced validation to prevent false positives from other services on port 8443.
     """
     try:
         import httpx
@@ -225,11 +225,11 @@ async def validate_webapi_bioserver(host: str = '127.0.0.1', port: int = 8000) -
         if not check_secugen_process_running():
             return False
             
-        # Attempt HTTP request to verify service behavior
-        async with httpx.AsyncClient(timeout=3.0) as client:
+        # Attempt HTTPS request to verify service behavior - disable TLS verification for local service
+        async with httpx.AsyncClient(verify=False, timeout=3.0) as client:
             try:
                 # Try root path - SecuGen Bio Server has specific timeout behavior
-                response = await client.get(f'http://{host}:{port}/', timeout=2.0)
+                response = await client.get(f'https://{host}:{port}/', timeout=2.0)
                 # Any HTTP response indicates a web server, but need process confirmation above
                 return response.status_code is not None
             except httpx.HTTPStatusError:
@@ -286,6 +286,10 @@ async def check_connect_bridge_discovery(ports: List[int] = None) -> Optional[Di
 # SECUGEN LIVE CAPTURE INTEGRATION
 # ============================================================
 
+# SecuGen Bio Server Configuration
+SECUGEN_BASE_URL = "https://localhost:8443"
+SECUGEN_CAPTURE_ENDPOINT = "/SGIFPCapture"
+
 # Global flag to prevent concurrent capture requests
 import threading
 _capture_lock = threading.Lock()
@@ -309,21 +313,21 @@ async def get_device_status():
             "error": "SecuGen Bio Server process (sgibiosrv.exe) not detected"
         }
     
-    # Check if HTTP WebAPI service is listening on port 8000
-    http_available = check_port_connectivity('127.0.0.1', 8000)
+    # Check HTTPS WebAPI service on port 8443 first (verified endpoint)
+    https_available = check_port_connectivity('localhost', 8443)
     
-    if http_available:
-        # Test actual capture endpoint functionality (Issue 2 fix)
+    if https_available:
+        # Test actual capture endpoint functionality
         endpoint_functional = await test_capture_endpoint_availability()
         
         if endpoint_functional:
             return {
                 "available": True,
-                "scanner_type": "webapi_http",
-                "device_name": "SecuGen Scanner (WebAPI HTTP)",
-                "service_url": "http://localhost:8000",
-                "capture_endpoint": "/SGIFPCapture",
-                "actionable_message": "Scanner ready - HTTP WebAPI on port 8000",
+                "scanner_type": "webapi_https",
+                "device_name": "SecuGen Scanner (WebAPI HTTPS)",
+                "service_url": SECUGEN_BASE_URL,
+                "capture_endpoint": SECUGEN_CAPTURE_ENDPOINT,
+                "actionable_message": "Scanner ready - HTTPS WebAPI on port 8443",
                 "error": None
             }
         else:
@@ -332,18 +336,31 @@ async def get_device_status():
                 "scanner_type": None,
                 "device_name": None,
                 "service_url": None,
-                "actionable_message": "SecuGen service running but capture endpoint not responding correctly",
-                "error": "Port 8000 accessible but /SGIFPCapture endpoint failed test"
+                "actionable_message": "SecuGen service running but HTTPS capture endpoint not responding correctly",
+                "error": f"Port 8443 accessible but {SECUGEN_CAPTURE_ENDPOINT} endpoint failed test"
             }
     else:
-        return {
-            "available": False,
-            "scanner_type": None,
-            "device_name": None,
-            "service_url": None,
-            "actionable_message": "SecuGen Bio Server process running but HTTP WebAPI port not accessible",
-            "error": "Process detected but no HTTP WebAPI service listening on port 8000"
-        }
+        # Fallback: Check if HTTP WebAPI service is available on port 8000
+        http_available = check_port_connectivity('localhost', 8000)
+        
+        if http_available:
+            return {
+                "available": False,
+                "scanner_type": None,
+                "device_name": None,
+                "service_url": None,
+                "actionable_message": "SecuGen Bio Server found on port 8000 (HTTP) but configured for port 8443 (HTTPS). Please check SecuGen service configuration.",
+                "error": "SecuGen service running on HTTP port 8000 but HTTPS port 8443 not available"
+            }
+        else:
+            return {
+                "available": False,
+                "scanner_type": None,
+                "device_name": None,
+                "service_url": None,
+                "actionable_message": "SecuGen Bio Server process running but neither HTTPS (8443) nor HTTP (8000) WebAPI ports are accessible",
+                "error": "Process detected but no WebAPI service listening on expected ports"
+            }
 
 
 @app.get("/api/fingerprint/secugen-config")
@@ -367,13 +384,15 @@ async def get_secugen_config():
 
 async def test_capture_endpoint_availability() -> bool:
     """
-    Test actual SecuGen WebAPI capture endpoint functionality (Issue 2 fix).
-    Makes a minimal test request to verify /SGIFPCapture responds correctly.
+    Test actual SecuGen WebAPI capture endpoint functionality.
+    Makes a minimal test request to verify SGIFPCapture responds correctly.
+    Uses HTTPS endpoint with TLS verification disabled for local SecuGen service.
     """
     try:
         import httpx
         
-        async with httpx.AsyncClient(timeout=3.0) as client:
+        # Disable TLS verification only for this local SecuGen diagnostic
+        async with httpx.AsyncClient(verify=False, timeout=3.0) as client:
             # Test the capture endpoint with minimal parameters
             test_params = {
                 'Timeout': '1000',  # Very short timeout to avoid waiting
@@ -386,7 +405,7 @@ async def test_capture_endpoint_availability() -> bool:
             
             try:
                 response = await client.post(
-                    'http://127.0.0.1:8000/SGIFPCapture',
+                    f"{SECUGEN_BASE_URL}{SECUGEN_CAPTURE_ENDPOINT}",
                     data=test_params,
                     timeout=2.0
                 )
@@ -396,7 +415,13 @@ async def test_capture_endpoint_availability() -> bool:
                     try:
                         json_response = response.json()
                         # Valid SecuGen response should have ErrorCode field
-                        return 'ErrorCode' in json_response
+                        # Note: ErrorCode 10004 indicates capture timeout/error, not success
+                        if 'ErrorCode' in json_response:
+                            error_code = json_response.get('ErrorCode', 0)
+                            # Service is responding, but ErrorCode indicates capture issue
+                            # This confirms the service is available but may need investigation
+                            return True
+                        return False
                     except:
                         return False
                         
@@ -846,3 +871,24 @@ def serve_app():
     if index_file.exists():
         return FileResponse(str(index_file))
     return FileResponse("frontend/index.html")
+
+
+# ============================================================
+# MAIN STARTUP SECTION
+# ============================================================
+
+if __name__ == "__main__":
+    import uvicorn
+    
+    print("Starting FastAPI Backend Server...")
+    print("SecuGen WebAPI should be running on port 8000")
+    print("FastAPI Backend will start on port 8001")
+    print("Frontend dev server available at http://localhost:5173")
+    print()
+    
+    uvicorn.run(
+        "backend_api:app",
+        host="0.0.0.0",
+        port=8001,
+        reload=True
+    )

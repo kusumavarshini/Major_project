@@ -24,8 +24,8 @@ function cn(...inputs: (string | undefined | null | false)[]) {
   return twMerge(clsx(inputs));
 }
 
-// API Base URL - defaults to local FastAPI backend
-const API_BASE = 'http://127.0.0.1:8000';
+// API Base URL - FastAPI backend on port 8001 (SecuGen uses 8000)
+const API_BASE = 'http://127.0.0.1:8001';
 
 type Candidate = {
   fingerprint_id: number;

@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SecuGen Hostname Fix Test</title>
+</head>
+<body>
+    <h1>SecuGen HTTPS Hostname Fix Test</h1>
+    <div id="status">Testing...</div>
+    <button id="testBtn">Test SecuGen HTTPS Connection</button>
+    <pre id="results"></pre>
+    
+    <script>
+    document.getElementById('testBtn').addEventListener('click', async function() {
+        const statusDiv = document.getElementById('status');
+        const resultsDiv = document.getElementById('results');
+        
+        try {
+            statusDiv.textContent = 'Testing backend API...';
+            
+            // Test 1: Get device status from backend
+            const response = await fetch('http://127.0.0.1:8001/api/fingerprint/device-status');
+            const deviceStatus = await response.json();
+            
+            resultsDiv.textContent += 'Backend API Response:\n';
+            resultsDiv.textContent += JSON.stringify(deviceStatus, null, 2) + '\n\n';
+            
+            if (deviceStatus.available && deviceStatus.service_url) {
+                statusDiv.textContent = 'Testing SecuGen HTTPS connection...';
+                
+                // Test 2: Try to connect to SecuGen service
+                const serviceUrl = deviceStatus.service_url;
+                const captureEndpoint = deviceStatus.capture_endpoint;
+                const fullUrl = serviceUrl + captureEndpoint;
+                
+                resultsDiv.textContent += `Testing URL: ${fullUrl}\n`;
+                
+                try {
+                    // Test SecuGen capture endpoint
+                    const captureParams = new URLSearchParams({
+                        'Timeout': '1000',
+                        'Quality': '50', 
+                        'licstr': '',
+                        'fakeDetection': '0',
+                        'templateFormat': '0',
+                        'imageWSQRate': '0.75'
+                    });
+                    
+                    const captureResponse = await fetch(fullUrl, {
+                        method: 'POST',
+                        body: captureParams,
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        }
+                    });
+                    
+                    if (captureResponse.ok) {
+                        const captureResult = await captureResponse.json();
+                        resultsDiv.textContent += 'SecuGen Response:\n';
+                        resultsDiv.textContent += JSON.stringify(captureResult, null, 2) + '\n\n';
+                        
+                        if (captureResult.ErrorCode) {
+                            if (captureResult.ErrorCode === 10004) {
+                                statusDiv.textContent = '✓ SUCCESS: HTTPS connection works! (ErrorCode 10004 = capture timeout, expected)';
+                                statusDiv.style.color = 'green';
+                            } else {
+                                statusDiv.textContent = `⚠ Connected but got ErrorCode: ${captureResult.ErrorCode}`;
+                                statusDiv.style.color = 'orange';
+                            }
+                        } else {
+                            statusDiv.textContent = '✓ Connected successfully!';
+                            statusDiv.style.color = 'green';
+                        }
+                    } else {
+                        throw new Error(`HTTP ${captureResponse.status}: ${captureResponse.statusText}`);
+                    }
+                    
+                } catch (captureError) {
+                    resultsDiv.textContent += `SecuGen Connection Error: ${captureError.message}\n`;
+                    
+                    if (captureError.message.includes('ERR_CERT_COMMON_NAME_INVALID')) {
+                        statusDiv.textContent = '❌ Still getting certificate hostname mismatch error';
+                        statusDiv.style.color = 'red';
+                    } else if (captureError.message.includes('ERR_CERT_AUTHORITY_INVALID')) {
+                        statusDiv.textContent = '⚠ Certificate authority invalid (expected for self-signed cert)';
+                        statusDiv.style.color = 'orange';
+                    } else {
+                        statusDiv.textContent = `❌ Connection failed: ${captureError.message}`;
+                        statusDiv.style.color = 'red';
+                    }
+                }
+                
+            } else {
+                statusDiv.textContent = '❌ SecuGen service not available';
+                statusDiv.style.color = 'red';
+            }
+            
+        } catch (error) {
+            statusDiv.textContent = `❌ Test failed: ${error.message}`;
+            statusDiv.style.color = 'red';
+            resultsDiv.textContent += `Error: ${error.message}\n`;
+        }
+    });
+    
+    // Auto-run test on page load
+    setTimeout(() => document.getElementById('testBtn').click(), 1000);
+    </script>
+</body>
+</html>

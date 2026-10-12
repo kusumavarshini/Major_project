@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Integration Test</title>
+</head>
+<body>
+    <h1>SecuGen Integration Test</h1>
+    <div id="results"></div>
+    
+    <script>
+    async function testIntegration() {
+        const results = document.getElementById('results');
+        
+        try {
+            // Test FastAPI Backend
+            results.innerHTML += '<p>Testing FastAPI Backend (port 8001)...</p>';
+            const response = await fetch('http://127.0.0.1:8001/api/fingerprint/device-status');
+            const data = await response.json();
+            
+            results.innerHTML += `<p>✓ Backend Status: ${data.actionable_message}</p>`;
+            results.innerHTML += `<p>✓ SecuGen Service URL: ${data.service_url}</p>`;
+            
+            // Test SecuGen Config
+            results.innerHTML += '<p>Testing SecuGen Config...</p>';
+            const configResponse = await fetch('http://127.0.0.1:8001/api/fingerprint/secugen-config');
+            const config = await configResponse.json();
+            
+            results.innerHTML += `<p>✓ SecuGen Config - Timeout: ${config.timeout}ms</p>`;
+            
+        } catch (error) {
+            results.innerHTML += `<p>✗ Error: ${error.message}</p>`;
+        }
+    }
+    
+    testIntegration();
+    </script>
+</body>
+</html>
+</text>
+</invoke>
