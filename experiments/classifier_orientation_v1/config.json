@@ -1,0 +1,69 @@
+{
+  "experiment_name": "classifier_orientation_v1",
+  "description": "Binary FingerprintCNN distortion classifier trained on orientation and physical capture variations",
+  "model": {
+    "architecture": "FingerprintCNN",
+    "in_channels": 1,
+    "image_size": 224,
+    "dropout": 0.5,
+    "num_classes": 1,
+    "param_count_expected": 389057
+  },
+  "dataset": {
+    "dataset_root": "data/orientation_capture_variations_v1",
+    "clean_dir": "clean",
+    "orientation_dir": "orientation_variation",
+    "partial_dir": "partial_capture",
+    "uneven_dir": "uneven_contact",
+    "split_manifest_dir": "experiments/classifier_orientation_v1/splits",
+    "splits": {
+      "train_ratio": 0.70,
+      "val_ratio": 0.15,
+      "test_ratio": 0.15
+    },
+    "seed": 42
+  },
+  "classes": {
+    "clean": 0,
+    "distorted": 1,
+    "distorted_components": [
+      "orientation_variation",
+      "partial_capture",
+      "uneven_contact"
+    ]
+  },
+  "preprocessing": {
+    "target_size": [224, 224],
+    "channels": 1,
+    "dtype": "float32",
+    "grayscale": true,
+    "normalization": "scale_0_1",
+    "interpolation": "INTER_AREA"
+  },
+  "training": {
+    "batch_size": 32,
+    "num_workers": 0,
+    "learning_rate": 0.0001,
+    "weight_decay": 0.0001,
+    "max_epochs": 25,
+    "early_stopping_patience": 6,
+    "loss_function": "BCEWithLogitsLoss",
+    "pos_weight": 1.0,
+    "optimizer": "Adam",
+    "threshold_tuning": {
+      "min_threshold": 0.05,
+      "max_threshold": 0.95,
+      "step": 0.01,
+      "optimization_metric": "f1"
+    }
+  },
+  "outputs": {
+    "checkpoint_dir": "experiments/classifier_orientation_v1/checkpoints",
+    "best_model_filename": "best_model.pth",
+    "threshold_filename": "threshold.json",
+    "history_filename": "training_history.json",
+    "test_results_filename": "test_results.json",
+    "confusion_matrix_filename": "test_confusion_matrix.json"
+  }
+}
+
