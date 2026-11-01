@@ -1,0 +1,25 @@
+sample_index,filename,ground_truth_label,class_name,applied_transforms,orig_sharpness,aug_sharpness,orig_ridge_darkness,aug_ridge_darkness,label_preserved
+1,FM001_C1_clean.png,0,CLEAN,"TIR_Darkening(g=1.47,d=15.6), AspectSqueeze(sy=0.79), OrientationTilt(deg=0.1)",477.7,696.7,93.0,23.0,True
+2,FM001_C3_clean.png,0,CLEAN,"TIR_Darkening(g=1.69,d=20.7), Sharpness(amt=1.07), SensorNoise(s=2.6), AspectSqueeze(sy=0.97), OrientationTilt(deg=-9.8)",694.5,2994.4,107.0,10.0,True
+3,FM001_C4_clean.png,0,CLEAN,OrientationTilt(deg=1.2),694.5,410.3,107.0,110.0,True
+4,FM001_F1_clean.png,0,CLEAN,"TIR_Darkening(g=1.82,d=21.2), SensorNoise(s=1.5), Gamma(0.92), AspectSqueeze(sy=0.91), OrientationTilt(deg=-3.1)",357.3,413.5,104.0,14.0,True
+5,FM001_F4_clean.png,0,CLEAN,"TIR_Darkening(g=1.86,d=22.4), SensorNoise(s=2.5), Gamma(0.99)",408.6,923.6,95.0,33.0,True
+6,FM001_F5_clean.png,0,CLEAN,"TIR_Darkening(g=1.81,d=24.4), Sharpness(amt=0.63), SensorNoise(s=1.4)",835.5,5272.3,108.0,24.0,True
+7,FM001_M1_clean.png,0,CLEAN,"TIR_Darkening(g=1.54,d=26.6), Sharpness(amt=0.81), Gamma(1.05), AspectSqueeze(sy=0.98)",291.8,1362.1,97.0,38.0,True
+8,FM001_M2_clean.png,0,CLEAN,"TIR_Darkening(g=1.37,d=22.0), Gamma(1.00)",363.3,695.3,88.0,39.0,True
+9,FM001_M3_clean.png,0,CLEAN,"Gamma(1.06), AspectSqueeze(sy=0.97)",485.1,326.1,96.0,93.0,True
+10,FM002_C1_clean.png,0,CLEAN,"TIR_Darkening(g=1.41,d=26.6), SensorNoise(s=2.3)",587.3,2159.7,155.0,95.0,True
+11,FM002_C3_clean.png,0,CLEAN,"TIR_Darkening(g=1.30,d=17.2), Sharpness(amt=1.34), Gamma(0.91)",176.5,3884.7,161.0,73.0,True
+12,FM002_C4_clean.png,0,CLEAN,"TIR_Darkening(g=1.34,d=24.2), SensorNoise(s=2.0), OrientationTilt(deg=-6.9)",209.7,442.7,171.0,115.0,True
+13,FM001_C1_orientation.png,1,DISTORTED,"Sharpness(amt=0.85), AspectSqueeze(sy=0.82), OrientationTilt(deg=2.1), ElasticDisplacement(a=3.5)",436.1,509.8,92.0,87.0,True
+14,FM001_C1_partial.png,1,DISTORTED,"TIR_Darkening(g=1.34,d=12.5), Sharpness(amt=1.01)",271.1,2026.5,92.0,13.0,True
+15,FM001_C1_uneven.png,1,DISTORTED,"TIR_Darkening(g=1.58,d=18.5), Sharpness(amt=1.13), PartialContactBoundary",145.8,3982.9,158.0,19.0,True
+16,FM001_C3_orientation.png,1,DISTORTED,"TIR_Darkening(g=1.57,d=18.8), Sharpness(amt=0.80), AspectSqueeze(sy=0.98)",651.9,3925.1,106.0,8.0,True
+17,FM001_C3_partial.png,1,DISTORTED,UnevenContactFalloff,533.8,328.2,107.0,116.0,True
+18,FM001_C3_uneven.png,1,DISTORTED,"TIR_Darkening(g=1.86,d=24.6), Sharpness(amt=1.16), AspectSqueeze(sy=0.82), OrientationTilt(deg=5.7), UnevenContactFalloff",241.3,2639.0,159.0,34.0,True
+19,FM001_C4_orientation.png,1,DISTORTED,"Sharpness(amt=0.75), Gamma(0.93), PartialContactBoundary",658.9,1685.4,107.0,95.0,True
+20,FM001_C4_partial.png,1,DISTORTED,"TIR_Darkening(g=1.49,d=16.2), Sharpness(amt=1.12), PartialContactBoundary",353.2,3961.8,110.0,0.0,True
+21,FM001_C4_uneven.png,1,DISTORTED,No-Op (Identity),197.5,197.5,160.0,160.0,True
+22,FM001_F1_orientation.png,1,DISTORTED,"TIR_Darkening(g=1.80,d=23.3), OrientationTilt(deg=3.9)",333.3,511.9,103.0,26.0,True
+23,FM001_F1_partial.png,1,DISTORTED,"TIR_Darkening(g=1.36,d=20.9), Sharpness(amt=1.08), SensorNoise(s=2.3), Gamma(1.02), UnevenContactFalloff",153.0,1059.6,103.0,38.0,True
+24,FM001_F1_uneven.png,1,DISTORTED,"AspectSqueeze(sy=0.92), PartialContactBoundary",257.8,167.6,104.0,107.0,True
