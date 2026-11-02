@@ -1,0 +1,60 @@
+{
+  "experiment_name": "classifier_real_v1",
+  "description": "FingerprintCNN trained strictly on cleaned real SecuGen physical dataset",
+  "training_time_seconds": 271.5,
+  "best_epoch": 18,
+  "epochs_executed": 28,
+  "calibrated_threshold": 0.44,
+  "hyperparameters": {
+    "seed": 42,
+    "batch_size": 16,
+    "learning_rate": 0.0001,
+    "weight_decay": 0.0001,
+    "dropout": 0.5,
+    "max_epochs": 50,
+    "patience": 10
+  },
+  "dataset_split": {
+    "train_samples": 158,
+    "train_pairs": 79,
+    "train_participants": 18,
+    "val_samples": 32,
+    "val_pairs": 16,
+    "val_participants": 4,
+    "test_samples": 30,
+    "test_pairs": 15,
+    "test_participants": 4
+  },
+  "test_performance": {
+    "loss": 0.4675721009572347,
+    "accuracy": 0.8333333333333334,
+    "precision": 0.7777777777777778,
+    "recall": 0.9333333333333333,
+    "specificity": 0.7333333333333333,
+    "f1": 0.8484848484848485,
+    "balanced_accuracy": 0.8333333333333333,
+    "roc_auc": 0.8800000000000001,
+    "fpr": 0.26666666666666666,
+    "fnr": 0.06666666666666667,
+    "tp": 14,
+    "fp": 4,
+    "tn": 11,
+    "fn": 1
+  },
+  "validation_performance_best_epoch": {
+    "loss": 0.5328490138053894,
+    "accuracy": 0.71875,
+    "precision": 0.64,
+    "recall": 1.0,
+    "specificity": 0.4375,
+    "f1": 0.7804878048780488,
+    "balanced_accuracy": 0.71875,
+    "roc_auc": 0.79296875,
+    "fpr": 0.5625,
+    "fnr": 0.0,
+    "tp": 16,
+    "fp": 9,
+    "tn": 7,
+    "fn": 0
+  }
+}

@@ -1,0 +1,167 @@
+{
+  "audit_metadata": {
+    "report_title": "FingerSure Physical Dataset Collection Duplicate & Consistency Audit",
+    "timestamp": "2026-11-02T12:10:00+05:30",
+    "dataset_root": "C:\\Users\\kusum\\OneDrive\\Desktop\\trial\\Fingerprint-distortion-detection-for-accurate-recognition\\FingerSure_Dataset",
+    "audit_type": "AUDIT-ONLY (Read-only forensic inspection)"
+  },
+  "executive_summary": {
+    "total_csv_rows": 88,
+    "total_mysql_records": 86,
+    "total_physical_images_on_disk": 84,
+    "clean_images_on_disk": 42,
+    "distorted_images_on_disk": 42,
+    "duplicate_records_in_csv": 2,
+    "duplicate_records_in_mysql": 0,
+    "physical_image_duplicates_on_disk": 0,
+    "ghost_metadata_records_without_image": 2,
+    "case_mismatch_records": 1,
+    "physical_images_represented_in_metadata": 84
+  },
+  "exact_duplicate_records": [
+    {
+      "duplicate_id": "DUP-001",
+      "participant_id": "Kusuma",
+      "hand": "RIGHT",
+      "finger": "THUMB",
+      "condition": 0,
+      "condition_name": "CLEAN",
+      "filename": "Kusuma_RIGHT_THUMB_clean.png",
+      "image_path": "clean/Kusuma_RIGHT_THUMB_clean.png",
+      "occurrences": [
+        {
+          "csv_line": 2,
+          "capture_timestamp": "2026-10-30T11:47:50",
+          "distortion_condition": "Normal Relaxed",
+          "status": "OBSOLETE (overwritten on disk by re-capture)"
+        },
+        {
+          "csv_line": 8,
+          "capture_timestamp": "2026-10-30T12:11:24",
+          "distortion_condition": "Normal Relaxed",
+          "status": "ACTIVE (matches disk file timestamp and hash)"
+        }
+      ]
+    },
+    {
+      "duplicate_id": "DUP-002",
+      "participant_id": "Kusuma",
+      "hand": "LEFT",
+      "finger": "THUMB",
+      "condition": 0,
+      "condition_name": "CLEAN",
+      "filename": "Kusuma_LEFT_THUMB_clean.png",
+      "image_path": "clean/Kusuma_LEFT_THUMB_clean.png",
+      "occurrences": [
+        {
+          "csv_line": 3,
+          "capture_timestamp": "2026-10-30T11:54:09",
+          "distortion_condition": "Normal Relaxed",
+          "status": "OBSOLETE (overwritten on disk by re-capture)"
+        },
+        {
+          "csv_line": 7,
+          "capture_timestamp": "2026-10-30T12:10:28",
+          "distortion_condition": "Normal Relaxed",
+          "status": "ACTIVE (matches disk file timestamp and hash)"
+        }
+      ]
+    }
+  ],
+  "presence_analysis": {
+    "exists_in_csv": true,
+    "exists_in_mysql": false,
+    "mysql_deduplication_mechanism": "Table physical_dataset_collection enforces UNIQUE KEY (participant_id, hand, finger, `condition`). When metadata was synced to MySQL using INSERT ... ON DUPLICATE KEY UPDATE, the later entries (lines 7 and 8) updated the previous entries (lines 3 and 2) rather than creating new rows. Thus, MySQL contains exactly 4 records for participant Kusuma with 0 duplicates."
+  },
+  "physical_file_verification": {
+    "are_image_files_duplicated": false,
+    "are_metadata_entries_duplicated": true,
+    "files_examined": [
+      {
+        "filename": "Kusuma_RIGHT_THUMB_clean.png",
+        "relative_path": "clean/Kusuma_RIGHT_THUMB_clean.png",
+        "exists_on_disk": true,
+        "size_bytes": 95953,
+        "mtime": "2026-10-30T12:11:24.648124",
+        "sha256": "f591761343ef80d294680879c4a5c54320986eb97eef9f270a6c0a006c9a9d28",
+        "correlated_csv_line": 8
+      },
+      {
+        "filename": "Kusuma_LEFT_THUMB_clean.png",
+        "relative_path": "clean/Kusuma_LEFT_THUMB_clean.png",
+        "exists_on_disk": true,
+        "size_bytes": 92281,
+        "mtime": "2026-10-30T12:10:28.374591",
+        "sha256": "3d7a759d12e5024f9fa31f016d910351ceeb8ba5be5d36e76cf022934149fa81",
+        "correlated_csv_line": 7
+      }
+    ],
+    "dataset_wide_binary_duplicates": {
+      "clean_directory": 0,
+      "distorted_directory": 0
+    }
+  },
+  "representation_audit_of_84_physical_images": {
+    "total_physical_images_on_disk": 84,
+    "images_represented_in_metadata": 84,
+    "coverage_percentage": 100.0,
+    "exact_name_and_case_matches": 83,
+    "case_mismatches": 1,
+    "case_mismatch_detail": {
+      "disk_file": "distorted/Bharthi_LEFT_THUMB_distorted.png",
+      "metadata_csv_line": 27,
+      "metadata_filename": "BHarthi_LEFT_THUMB_distorted.png",
+      "metadata_participant_id": "BHarthi",
+      "os_behavior": "Windows NTFS is case-preserving but case-insensitive, allowing resolution, but Linux/strict systems will treat this as a mismatch."
+    },
+    "images_missing_from_metadata": 0
+  },
+  "discrepancy_reconciliation_88_vs_86_vs_84": {
+    "summary": "The +4 discrepancy between 88 metadata rows and 84 physical images consists of exactly 2 re-capture duplicates (Kusuma) plus 2 orphan/ghost records without image files (ashitta).",
+    "breakdown": [
+      {
+        "category": "Physical Images on Disk (True Baseline)",
+        "count": 84,
+        "details": "21 verified participants * 4 captures (Right Clean, Right Distorted, Left Clean, Left Distorted) = 42 clean + 42 distorted."
+      },
+      {
+        "category": "Kusuma Re-capture Duplicates",
+        "count": 2,
+        "details": "Lines 2 and 3 recorded initial clean captures. Lines 7 and 8 recorded re-captures 23 minutes later, which overwrote the physical images on disk but appended new rows in CSV."
+      },
+      {
+        "category": "Ashitta Orphan / Ghost Records",
+        "count": 2,
+        "details": "Lines 36 and 37 recorded clean captures for participant ashitta, but corresponding image files clean/ashitta_RIGHT_THUMB_clean.png and clean/ashitta_LEFT_THUMB_clean.png do not exist on disk. Ashitta also has 0 distorted captures and is not present in gallery_manifest.csv."
+      }
+    ],
+    "reconciliation_equation": {
+      "csv_total": "84 physical + 2 Kusuma duplicates + 2 ashitta ghost = 88 rows",
+      "mysql_total": "84 physical + 0 Kusuma duplicates (deduped by UNIQUE key) + 2 ashitta ghost = 86 rows",
+      "disk_total": "42 clean + 42 distorted = 84 image files"
+    }
+  },
+  "recommended_corrections": [
+    {
+      "step": 1,
+      "action": "Deduplicate metadata.csv for Kusuma",
+      "details": "Safely remove obsolete CSV lines 2 and 3 (timestamps 11:47:50 and 11:54:09), retaining lines 7 and 8 which match the physical disk files."
+    },
+    {
+      "step": 2,
+      "action": "Address ashitta orphan records",
+      "details": "Either capture the missing physical fingerprints for participant ashitta (2 clean + 2 distorted) to make the participant complete, or archive lines 36 and 37 to a separate quarantine file."
+    },
+    {
+      "step": 3,
+      "action": "Harmonize participant ID casing for Bharthi",
+      "details": "Normalize line 27 participant_id from 'BHarthi' to 'Bharthi' to eliminate case mismatch."
+    },
+    {
+      "step": 4,
+      "action": "Re-sync MySQL database",
+      "details": "After performing approved CSV adjustments, re-run sync to maintain exact 1-to-1 parity across Disk, CSV, and MySQL."
+    }
+  ]
+}
+

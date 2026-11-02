@@ -1,0 +1,49 @@
+{
+  "experiment_name": "classifier_orientation_v4",
+  "description": "FingerSure V4 - FingerprintCNN Distortion Classifier on Corrected Balanced Dataset",
+  "seed": 42,
+  "model": {
+    "architecture": "FingerprintCNN",
+    "dropout": 0.5,
+    "input_channels": 1,
+    "input_size": [224, 224],
+    "param_count_expected": 389057
+  },
+  "dataset": {
+    "dataset_root": "experiments/classifier_orientation_v4/dataset",
+    "train_manifest": "experiments/classifier_orientation_v4/dataset/train_manifest.csv",
+    "val_manifest": "experiments/classifier_orientation_v4/dataset/val_manifest.csv",
+    "test_manifest": "experiments/classifier_orientation_v4/dataset/test_manifest.csv",
+    "batch_size": 32,
+    "num_workers": 0,
+    "classes": {
+      "0": "clean",
+      "1": "distorted"
+    }
+  },
+  "training": {
+    "optimizer": "Adam",
+    "learning_rate": 0.0001,
+    "weight_decay": 0.0001,
+    "loss_function": "BCEWithLogitsLoss",
+    "max_epochs": 30,
+    "early_stopping_patience": 9,
+    "threshold_tuning": {
+      "min_threshold": 0.05,
+      "max_threshold": 0.95,
+      "step": 0.01,
+      "optimization_metric": "f1_score"
+    }
+  },
+  "outputs": {
+    "output_dir": "experiments/classifier_orientation_v4",
+    "checkpoint_dir": "experiments/classifier_orientation_v4/checkpoints",
+    "best_model_filename": "best_model.pth",
+    "threshold_filename": "threshold.json",
+    "history_filename": "training_history.json",
+    "summary_filename": "training_summary.json",
+    "report_filename": "training_report.md",
+    "test_predictions_filename": "test_predictions.csv"
+  }
+}
+

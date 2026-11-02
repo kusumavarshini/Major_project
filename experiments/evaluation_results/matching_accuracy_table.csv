@@ -1,0 +1,6 @@
+Performance Measure,Before Rectification,After Rectification
+Number of query fingerprints,317,317
+Top-1 identification accuracy (%),5.99%,5.99%
+Top-5 identification accuracy (%),9.78%,10.09%
+False Acceptance Rate (FAR) (%),0.02%,0.02%
+False Rejection Rate (FRR) (%),97.79%,98.11%

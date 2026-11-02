@@ -1,0 +1,192 @@
+==========================================================================================
+          INDEPENDENT AUDIT REPORT: FINGERSURE SOURCEAFIS EVALUATION
+==========================================================================================
+Audit Target Directory: C:\Users\kusum\OneDrive\Desktop\trial\Fingerprint-distortion-detection-for-accurate-recognition\FingerSure_Dataset\evaluation
+Audit Output Artifact:  C:\Users\kusum\OneDrive\Desktop\trial\Fingerprint-distortion-detection-for-accurate-recognition\FingerSure_Dataset\evaluation\evaluation_audit.txt
+==========================================================================================
+
+1. TOP-1 AND TOP-5 ACCURACY RECALCULATION
+------------------------------------------------------------------------------------------
+Total per-query rows: Before = 42, After = 42 (Expected: 42 each)
+Before Top-1: Recalculated = 16/42 (38.0952% -> 38.10%) | Reported = 38.10% [MATCH]
+After  Top-1: Recalculated = 14/42 (33.3333% -> 33.33%) | Reported = 33.33% [MATCH]
+Before Top-5: Recalculated = 23/42 (54.7619% -> 54.76%) | Reported = 54.76% [MATCH]
+After  Top-5: Recalculated = 18/42 (42.8571% -> 42.86%) | Reported = 42.86% [MATCH]
+Top-1 Delta:  Exact Unrounded = -4.7619% (-4.76%) | Reported (from rounded) = -4.77%
+Top-5 Delta:  Exact Unrounded = -11.9048% (-11.90%) | Reported (from rounded) = -11.90%
+
+2. GENUINE AND IMPOSTOR SCORES AUDIT
+------------------------------------------------------------------------------------------
+Total Genuine Score Records:  42 (Expected: 42) [MATCH]
+Total Impostor Score Records: 1722 (Expected: 42 x 41 = 1722) [MATCH]
+Mean Genuine:   Distorted Recalc =  73.2817 ( 73.28) | Reported = 73.28
+Mean Genuine:   Rectified Recalc =  69.7738 ( 69.77) | Reported = 69.77
+Median Genuine: Distorted Recalc =  59.2450 ( 59.25) | Reported = 59.25
+Median Genuine: Rectified Recalc =  50.4650 ( 50.47) | Reported = 50.47
+Std Dev Genuine:Distorted Recalc =  52.6125 ( 52.61) | Reported = 52.61
+Std Dev Genuine:Rectified Recalc =  47.6160 ( 47.62) | Reported = 47.62
+Min Genuine:    Distorted Recalc =  25.2100 ( 25.21) | Reported = 25.21
+Min Genuine:    Rectified Recalc =  19.8600 ( 19.86) | Reported = 19.86
+Max Genuine:    Distorted Recalc = 275.4900 (275.49) | Reported = 275.49
+Max Genuine:    Rectified Recalc = 203.7300 (203.73) | Reported = 203.73
+Mean Impostor:  Distorted Recalc =  39.2528 ( 39.25) | Reported = 39.25
+Mean Impostor:  Rectified Recalc =  38.4375 ( 38.44) | Reported = 38.44
+Median Impostor:Distorted Recalc =  36.9600 ( 36.96) | Reported = 36.96
+Median Impostor:Rectified Recalc =  36.3850 ( 36.38) | Reported = 36.38
+Max Impostor:   Distorted Recalc = 131.0600 (131.06) | Reported = 131.06
+Max Impostor:   Rectified Recalc = 132.5700 (132.57) | Reported = 132.57
+
+3. FAR AND FRR AUDIT AT THRESHOLD 50.0
+------------------------------------------------------------------------------------------
+Distorted FRR: Recalc = 17/42 (40.4762% -> 40.48%) | Reported = 40.48% [MATCH]
+Rectified FRR: Recalc = 21/42 (50.0000% -> 50.00%) | Reported = 50.00% [MATCH]
+Distorted GAR: Recalc = 25/42 (59.5238% -> 59.52%) | Reported = 59.52% [MATCH]
+Rectified GAR: Recalc = 21/42 (50.0000% -> 50.00%) | Reported = 50.00% [MATCH]
+Distorted FAR: Recalc = 294/1722 (17.073171% -> 17.0732%) | Reported = 17.0732% [MATCH]
+Rectified FAR: Recalc = 270/1722 (15.679443% -> 15.6794%) | Reported = 15.6794% [MATCH]
+
+4. THRESHOLD SWEEP VERIFICATION ACROSS ALL OPERATING POINTS
+------------------------------------------------------------------------------------------
+Threshold  | Recalc Dist FRR  Recalc Dist FAR  | Recalc Rect FRR  Recalc Rect FAR  | Report Match
+------------------------------------------------------------------------------------------
+10.0       |  0 (  0.00%)   1722 (100.0000%) |  0 (  0.00%)   1722 (100.0000%) | PASS
+20.0       |  0 (  0.00%)   1695 (98.4321%) |  1 (  2.38%)   1680 (97.5610%) | PASS
+30.0       |  5 ( 11.90%)   1302 (75.6098%) |  6 ( 14.29%)   1290 (74.9129%) | PASS
+40.0       | 13 ( 30.95%)    692 (40.1858%) | 12 ( 28.57%)    635 (36.8757%) | PASS
+50.0       | 17 ( 40.48%)    294 (17.0732%) | 21 ( 50.00%)    270 (15.6794%) | PASS
+60.0       | 21 ( 50.00%)    107 ( 6.2137%) | 27 ( 64.29%)     87 ( 5.0523%) | PASS
+70.0       | 28 ( 66.67%)     43 ( 2.4971%) | 29 ( 69.05%)     32 ( 1.8583%) | PASS
+80.0       | 30 ( 71.43%)     16 ( 0.9292%) | 30 ( 71.43%)     16 ( 0.9292%) | PASS
+90.0       | 32 ( 76.19%)      5 ( 0.2904%) | 32 ( 76.19%)      5 ( 0.2904%) | PASS
+100.0      | 35 ( 83.33%)      3 ( 0.1742%) | 33 ( 78.57%)      3 ( 0.1742%) | PASS
+
+5. MAXIMUM IMPOSTOR SCORE vs. FAR @ THRESHOLD 100 AUDIT
+------------------------------------------------------------------------------------------
+Distorted Impostor Pairs >= 100.0: Exactly 3 / 1722 (0.1742%)
+  * Query: Ganesh_RIGHT_THUMB        vs Candidate: manal_LEFT_THUMB          Score: 105.85
+  * Query: Lakshmi_RIGHT_THUMB       vs Candidate: Ganesh_RIGHT_THUMB        Score: 117.07
+  * Query: sushmitha_LEFT_THUMB      vs Candidate: Lakshmi_LEFT_THUMB        Score: 131.06
+  -> Maximum Distorted Impostor Score = 131.06 (sushmitha_LEFT_THUMB vs Lakshmi_LEFT_THUMB)
+
+Rectified Impostor Pairs >= 100.0: Exactly 3 / 1722 (0.1742%)
+  * Query: harshitha_RIGHT_THUMB     vs Candidate: jyothika_LEFT_THUMB       Score: 132.57
+  * Query: harshitha_RIGHT_THUMB     vs Candidate: thryaee_LEFT_THUMB        Score: 106.51
+  * Query: issa_LEFT_THUMB           vs Candidate: Kusuma_LEFT_THUMB         Score: 105.74
+  -> Maximum Rectified Impostor Score = 132.57 (harshitha_RIGHT_THUMB vs jyothika_LEFT_THUMB)
+
+Mathematical Consistency: Both Distorted and Rectified have exactly 3 impostor scores >= 100.0.
+FAR @ 100.0 = 3 / 1722 = 0.174216% -> 0.1742%, strictly consistent with reported Max Impostor Scores.
+
+6 & 7. 42 PAIRED VERIFICATION TRANSITIONS AUDIT
+------------------------------------------------------------------------------------------
+Verification Partition Counts:
+  1. RESCUED (Fail -> Pass):           2 / 42 ( 4.76%)
+  2. MAINTAINED (Pass -> Pass):       19 / 42 (45.24%)
+  3. PERSISTENT_FAIL (Fail -> Fail):  15 / 42 (35.71%)
+  4. DEGRADED (Pass -> Fail):          6 / 42 (14.29%)
+  5. Uncategorized / Overlapping:      0 / 42
+  -> Sum of 4 Mutually Exclusive Categories: 42 / 42 (100.0% Complete, Matches: True)
+
+Identities in RESCUED (Fail -> Pass @ 50.0):
+  - Row  6: Bharthi_RIGHT_THUMB       Distorted= 46.68 -> Rectified= 55.90 (Delta= +9.22)
+  - Row 20: Mangalamma_RIGHT_THUMB    Distorted= 42.98 -> Rectified=169.56 (Delta=+126.58)
+
+Identities in DEGRADED (Pass -> Fail @ 50.0):
+  - Row  7: Bhushan_LEFT_THUMB        Distorted=173.31 -> Rectified= 31.33 (Delta=-141.98)
+  - Row 14: Ganesh_RIGHT_THUMB        Distorted= 63.10 -> Rectified= 25.10 (Delta=-38.00)
+  - Row 23: Priyanka_LEFT_THUMB       Distorted= 64.64 -> Rectified= 38.93 (Delta=-25.71)
+  - Row 35: manya_LEFT_THUMB          Distorted=214.18 -> Rectified= 27.86 (Delta=-186.32)
+  - Row 37: shuban_LEFT_THUMB         Distorted= 55.87 -> Rectified= 33.69 (Delta=-22.18)
+  - Row 39: sushmitha_LEFT_THUMB      Distorted= 55.99 -> Rectified= 31.62 (Delta=-24.37)
+
+8. MYSQL REFERENCE GALLERY USAGE AUDIT
+------------------------------------------------------------------------------------------
+MySQL Host: localhost:3306
+MySQL Database: 'fingersure_eval_db', Table: 'fingerprint_gallery'
+Total Enrolled Records: 42, Unique Identities: 42
+All 42 reference templates used in Experiment A and Experiment B were retrieved from MySQL.
+Zero reads from local .dat files confirmed in evaluate_fingersure_mysql.py.
+
+9. SCORING AND MATCHING CONFIGURATION CONSISTENCY AUDIT
+------------------------------------------------------------------------------------------
+SourceAFIS Matching Pipeline Verification:
+  - Matcher instance: SourceAFISMatcher() configured identically for both runs.
+  - Candidate pre-indexing: candidate edges, length buckets, and adjacencies were pre-built once
+    and reused without modification for both distorted and rectified queries.
+  - Fixed threshold: MATCH_THRESHOLD = 50.0 strictly applied across all evaluations.
+  - Parameter invariance: SafisParams(max_neighbors=10, max_edge_length=320.0, length_tol=8.0, angle_tol=0.35, max_roots=25).
+  - Biometric standardization: Target resolution (384, 384) used identically.
+
+10. IDENTITY PAIRING ACROSS ARTIFACT FILES AUDIT
+------------------------------------------------------------------------------------------
+Set equality across all 4 files: True
+Row sequence Before vs After results files: PERFECT MATCH
+Row sequence Paired vs Genuine scores files: PERFECT MATCH
+Row sequence Per-Query vs Paired files: ORDERING DIFFERENCE DETECTED
+  -> Rows with differing sequence index: 22 rows (Rows 15 to 36)
+
+11. SIDE-BY-SIDE RECALCULATED vs. REPORTED METRICS TABLE
+------------------------------------------------------------------------------------------
+Metric                              | Reported (Dist) Recalc (Dist)   | Reported (Rect) Recalc (Rect)   | Status
+------------------------------------------------------------------------------------------
+Top-1 Identification Accuracy       |          38.10%          38.10% |          33.33%          33.33% | PASS  
+Top-5 Identification Accuracy       |          54.76%          54.76% |          42.86%          42.86% | PASS  
+False Rejection Rate (FRR @ 50.0)   |          40.48%          40.48% |          50.00%          50.00% | PASS  
+Genuine Acceptance Rate (GAR @ 50.0) |          59.52%          59.52% |          50.00%          50.00% | PASS  
+False Acceptance Rate (FAR @ 50.0)  |        17.0732%        17.0732% |        15.6794%        15.6794% | PASS  
+Mean Genuine Score                  |           73.28           73.28 |           69.77           69.77 | PASS  
+Median Genuine Score                |           59.25           59.25 |           50.47           50.47 | PASS  
+Std Dev Genuine Score               |           52.61           52.61 |           47.62           47.62 | PASS  
+Min Genuine Score                   |           25.21           25.21 |           19.86           19.86 | PASS  
+Max Genuine Score                   |          275.49          275.49 |          203.73          203.73 | PASS  
+Mean Impostor Score                 |           39.25           39.25 |           38.44           38.44 | PASS  
+Median Impostor Score               |           36.96           36.96 |           36.38           36.38 | PASS  
+Max Impostor Score                  |          131.06          131.06 |          132.57          132.57 | PASS  
+
+12. DETAILED DISCREPANCY AUDIT & ROOT CAUSES
+------------------------------------------------------------------------------------------
+DISCREPANCY 1: 'genuine_matched_minutiae' Column Value Recorded as 0 Across All Rows
+  - Files Affected: before_rectification_results.csv (Col 7, 42 rows)
+                    after_rectification_results.csv (Col 7, 42 rows)
+                    genuine_scores.csv (Cols 5 & 8, 42 rows)
+  - Observed: All 42 rows have genuine_matched_minutiae = 0.
+  - Root Cause: In evaluate_fingersure_mysql.py (line 203), the script queried:
+       genuine_minutiae = int(genuine_cand.get('matched_minutiae_count', 0))
+       However, matcher.identify_1toN() stores this value under the dictionary key
+       'matched_minutiae' (not 'matched_minutiae_count'). As a result, the default 0 was returned.
+  - Impact: Purely informational metadata. Does NOT affect matching raw_score, rank,
+            genuine_decision, Top-1/Top-5 accuracy, FRR, or FAR.
+
+DISCREPANCY 2: Row Sequence Difference Between Per-Query Results and Paired Files
+  - Files Affected: before_rectification_results.csv / after_rectification_results.csv (Rows 15 to 42)
+                    vs. paired_comparison.csv / genuine_scores.csv (Rows 15 to 42)
+  - Observed: Rows 1-14 have identical sequence. Starting at row 15, ordering diverges.
+  - Root Cause: Windows filesystem Path.glob() sorts names case-insensitively:
+       'Ganesh_...' -> 'harshitha_...' -> 'issa_...' -> 'jyothika_...' -> 'Kusuma_...'
+       In contrast, paired_comparison.csv sorts identities using Python's standard string sort:
+       sorted(dist_map.keys()), which is ASCII case-sensitive ('A'..'Z' before 'a'..'z').
+       Therefore, all uppercase identities (Kusuma, Lakshmi, Mangalamma, Neha, Priyanka, Sanjana)
+       appear before lowercase identities (harshitha, issa, jyothika, manal, manya, shuban, sushmitha, thryaee).
+  - Impact: Zero impact on metrics or correctness. All paired rows look up counterparts by
+            exact dictionary identity string; each identity is paired with 100% precision.
+
+DISCREPANCY 3: Top-1 Accuracy Delta Rounding Precision Difference (0.01%)
+  - Files Affected: evaluation_summary.csv (Row 10, Col 4)
+  - Observed: Reported Difference is -4.77%, whereas exact fraction difference is -4.76%.
+  - Root Cause: Top-1 Before is 16/42 = 38.0952% (rounded to 38.10%).
+       Top-1 After is 14/42 = 33.3333% (rounded to 33.33%).
+       Subtracting pre-rounded values yields: 33.33% - 38.10% = -4.77%.
+       Subtracting exact fractions yields: (14 - 16)/42 = -2/42 = -4.7619% (-4.76%).
+  - Impact: Negligible 0.01% floating-point display rounding artifact.
+
+==========================================================================================
+                            AUDIT SUMMARY VERDICT
+==========================================================================================
+[OK] 1. Mathematical Accuracy: All recalculated Top-1, Top-5, FRR, GAR, FAR, and score
+       distributions match the reported values across all operating points.
+[OK] 2. Partition Integrity: The 42 verification transitions form a strictly mutually exclusive
+       and collectively exhaustive set summing exactly to 42.
+[OK] 3. Database Isolation: All clean reference templates originated exclusively from MySQL.
+[OK] 4. Discrepancy Transparency: All 3 minor metadata/formatting nuances are fully identified,
+       isolated to specific rows/keys, and confirmed to have zero effect on biometric accuracy.
+==========================================================================================

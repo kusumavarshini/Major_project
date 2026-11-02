@@ -1,0 +1,67 @@
+==========================================================================================
+FINGERSURE: SOURCEAFIS RECTIFIED BIOMETRIC EVALUATION PIPELINE
+==========================================================================================
+Execution started at: 2026-10-29 21:06:54
+Project root        : C:\Users\kusum\OneDrive\Desktop\trial\Fingerprint-distortion-detection-for-accurate-recognition
+Output directory    : C:\Users\kusum\OneDrive\Desktop\trial\Fingerprint-distortion-detection-for-accurate-recognition\sourceafis_rectified_evaluation
+Operating threshold : 50.0 (SourceAFIS raw score)
+Available CPU cores : 16
+
+[STEP 1] Programmatic Dataset Inspection & Path Verification...
+  - Clean Gallery (split/test)              : exists=True | path=C:\Users\kusum\OneDrive\Desktop\trial\Fingerprint-distortion-detection-for-accurate-recognition\data\split\test
+  - Original Distorted (test_distorted)     : exists=True | path=C:\Users\kusum\OneDrive\Desktop\trial\Fingerprint-distortion-detection-for-accurate-recognition\data\test_distorted\distorted
+  - DDRNet-Rectified (rectified_ddrnet_test): exists=True | path=C:\Users\kusum\OneDrive\Desktop\trial\Fingerprint-distortion-detection-for-accurate-recognition\data\rectified_ddrnet_test
+  - Metadata CSV                            : exists=True | path=C:\Users\kusum\OneDrive\Desktop\trial\Fingerprint-distortion-detection-for-accurate-recognition\data\test_distorted\distortion_metadata.csv
+
+Verifying folder 'rectified_ddrnet_test' counts:
+  Total rectified image files found: 675 (Expected: 675)
+  Verified family count            : 15 (Expected: 15)
+  Families                         : ['FAMILY-13', 'FAMILY-14', 'FAMILY-15', 'FAMILY-20', 'FAMILY-23', 'FAMILY-36', 'FAMILY-37', 'FAMILY-42', 'FAMILY-48', 'FAMILY-54', 'FAMILY-65', 'FAMILY-66', 'FAMILY-67', 'FAMILY-78', 'FAMILY-9']
+  Distortion types distribution    : {'bending': 225, 'elastic': 225, 'local': 225}
+  >> VERIFIED: Exactly 15 families, 45 images per family, exactly 675 images total.
+
+Verifying folder 'data/split/test' (Clean Reference Gallery):
+  Total clean reference images found: 225 (Expected: 225)
+  Distinct clean reference identities: 45 (Expected: 45)
+
+Verifying folder 'data/test_distorted/distorted':
+  Total distorted images found      : 225 (Expected: 225)
+  Metadata rows loaded from CSV     : 225
+  Distortion types in metadata      : {'elastic': 75, 'bending': 75, 'local': 75}
+
+[STEP 2] Establishing and exporting identity mapping table...
+  >> Saved validated identity mapping to: identity_mapping.csv
+  Total mapped rectified queries   : 675
+  Queries with clean reference      : 675/675
+  Queries with paired distorted match: 225/675 (225 direct pairs)
+
+[STEP 3] Loading & Pre-Indexing 225 Clean Reference Gallery Templates...
+  Loaded and pre-indexed 225 clean templates in 42.17s.
+  Clean gallery FTE templates (< 2 minutiae): 8 / 225
+
+[STEP 4] Executing Condition B: 675 Rectified Fingerprint Queries...
+  Evaluated 675 rectified queries in 2483.65s (3.68s/query).
+
+[STEP 5] Executing Condition A: 225 Original Distorted Fingerprint Queries...
+  Evaluated 225 distorted queries in 505.58s (2.25s/query).
+
+[STEP 6] Saving per-query detailed matching results...
+  >> Saved 675 rectified matching results to: rectified_matching_results.csv
+  >> Saved combined per-query results (900 rows) to: per_query_results.csv
+
+[STEP 7] Calculating Identification & Verification Metrics...
+
+[STEP 8] Constructing Paired Before-and-After Comparison...
+  Direct paired queries (same stem + same distortion type): 225 pairs
+  Rank shifts across 225 paired queries:
+    - Improved rank : 103
+    - Degraded rank : 120
+    - Unchanged rank: 2
+  >> Saved side-by-side comparison table to: before_after_comparison.csv
+  >> Saved machine-readable summary to: rectified_evaluation_summary.json
+
+[STEP 10] Generating comprehensive evaluation report...
+  >> Saved human-readable summary report to: rectified_evaluation_report.txt
+
+Execution finished successfully in 3031.85s.
+==========================================================================================

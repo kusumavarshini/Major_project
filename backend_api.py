@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import os
 import sys
+import time
+import json
 import socket
 import base64
 import binascii
@@ -99,7 +101,7 @@ def dataset_stats():
 @app.get("/gallery/stats")
 def gallery_stats():
     """
-    Retrieve statistics from the operational FVC gallery (newdb.external_fvc_clean_gallery).
+    Retrieve statistics from the operational gallery (fingersure_eval_db.fingerprint_gallery).
     This is the gallery used by the live identification pipeline.
     """
     return get_gallery_statistics()
@@ -298,69 +300,48 @@ _capture_in_progress = False
 @app.get("/api/fingerprint/device-status")
 @app.get("/fingerprint/device-status")
 async def get_device_status():
-    """Check SecuGen WebAPI service availability for JavaScript capture."""
-    
-    # Check for SecuGen process first (hardware confirmation)
-    process_running = check_secugen_process_running()
-    
-    if not process_running:
+    """Check SecuGen scanner availability (Native hardware driver or WebAPI service)."""
+    # 1. Check Native Hardware driver first
+    try:
+        from secugen_scanner import SecuGenNativeScanner
+        scanner = SecuGenNativeScanner()
+        info = scanner.open()
+        serial = info.DeviceSN.decode(errors='ignore').strip()
+        scanner.close()
         return {
-            "available": False,
-            "scanner_type": None,
-            "device_name": None,
-            "service_url": None,
-            "actionable_message": "SecuGen Bio Server service is not running. Please start sgibiosrv.exe",
-            "error": "SecuGen Bio Server process (sgibiosrv.exe) not detected"
+            "available": True,
+            "scanner_type": "native_hardware",
+            "device_name": f"SecuGen Hamster Pro 20 (SN: {serial})",
+            "service_url": SECUGEN_BASE_URL,
+            "capture_endpoint": SECUGEN_CAPTURE_ENDPOINT,
+            "actionable_message": f"SecuGen Hamster Pro 20 ready (Hardware SN: {serial})",
+            "error": None
         }
-    
-    # Check HTTPS WebAPI service on port 8443 first (verified endpoint)
+    except Exception:
+        pass
+
+    # 2. Fallback: Check HTTPS WebAPI service on port 8443
     https_available = check_port_connectivity('localhost', 8443)
-    
-    if https_available:
-        # Test actual capture endpoint functionality
-        endpoint_functional = await test_capture_endpoint_availability()
-        
-        if endpoint_functional:
-            return {
-                "available": True,
-                "scanner_type": "webapi_https",
-                "device_name": "SecuGen Scanner (WebAPI HTTPS)",
-                "service_url": SECUGEN_BASE_URL,
-                "capture_endpoint": SECUGEN_CAPTURE_ENDPOINT,
-                "actionable_message": "Scanner ready - HTTPS WebAPI on port 8443",
-                "error": None
-            }
-        else:
-            return {
-                "available": False,
-                "scanner_type": None,
-                "device_name": None,
-                "service_url": None,
-                "actionable_message": "SecuGen service running but HTTPS capture endpoint not responding correctly",
-                "error": f"Port 8443 accessible but {SECUGEN_CAPTURE_ENDPOINT} endpoint failed test"
-            }
-    else:
-        # Fallback: Check if HTTP WebAPI service is available on port 8000
-        http_available = check_port_connectivity('localhost', 8000)
-        
-        if http_available:
-            return {
-                "available": False,
-                "scanner_type": None,
-                "device_name": None,
-                "service_url": None,
-                "actionable_message": "SecuGen Bio Server found on port 8000 (HTTP) but configured for port 8443 (HTTPS). Please check SecuGen service configuration.",
-                "error": "SecuGen service running on HTTP port 8000 but HTTPS port 8443 not available"
-            }
-        else:
-            return {
-                "available": False,
-                "scanner_type": None,
-                "device_name": None,
-                "service_url": None,
-                "actionable_message": "SecuGen Bio Server process running but neither HTTPS (8443) nor HTTP (8000) WebAPI ports are accessible",
-                "error": "Process detected but no WebAPI service listening on expected ports"
-            }
+    process_running = check_secugen_process_running()
+    if https_available and process_running:
+        return {
+            "available": True,
+            "scanner_type": "webapi_https",
+            "device_name": "SecuGen Scanner (WebAPI HTTPS)",
+            "service_url": SECUGEN_BASE_URL,
+            "capture_endpoint": SECUGEN_CAPTURE_ENDPOINT,
+            "actionable_message": "Scanner ready - HTTPS WebAPI on port 8443",
+            "error": None
+        }
+
+    return {
+        "available": False,
+        "scanner_type": None,
+        "device_name": None,
+        "service_url": None,
+        "actionable_message": "SecuGen Hamster Pro 20 USB scanner not detected. Please connect USB cable.",
+        "error": "No SecuGen hardware or WebAPI service detected"
+    }
 
 
 @app.get("/api/fingerprint/secugen-config")
@@ -382,20 +363,25 @@ async def get_secugen_config():
     }
 
 
+_last_endpoint_check_time = 0.0
+_last_endpoint_check_result = False
+
 async def test_capture_endpoint_availability() -> bool:
     """
     Test actual SecuGen WebAPI capture endpoint functionality.
-    Makes a minimal test request to verify SGIFPCapture responds correctly.
-    Uses HTTPS endpoint with TLS verification disabled for local SecuGen service.
+    Cached for 60 seconds to prevent continuous optical scanner bus contention.
     """
+    global _last_endpoint_check_time, _last_endpoint_check_result
+    now = time.time()
+    if (now - _last_endpoint_check_time) < 60.0:
+        return _last_endpoint_check_result
+
     try:
         import httpx
         
-        # Disable TLS verification only for this local SecuGen diagnostic
         async with httpx.AsyncClient(verify=False, timeout=3.0) as client:
-            # Test the capture endpoint with minimal parameters
             test_params = {
-                'Timeout': '1000',  # Very short timeout to avoid waiting
+                'Timeout': '1000',
                 'Quality': '50',
                 'licstr': '',
                 'fakeDetection': '0',
@@ -410,26 +396,24 @@ async def test_capture_endpoint_availability() -> bool:
                     timeout=2.0
                 )
                 
-                # Check if we get a valid SecuGen response structure
                 if response.status_code == 200:
                     try:
                         json_response = response.json()
-                        # Valid SecuGen response should have ErrorCode field
-                        # Note: ErrorCode 10004 indicates capture timeout/error, not success
                         if 'ErrorCode' in json_response:
-                            error_code = json_response.get('ErrorCode', 0)
-                            # Service is responding, but ErrorCode indicates capture issue
-                            # This confirms the service is available but may need investigation
+                            _last_endpoint_check_time = now
+                            _last_endpoint_check_result = True
                             return True
+                        _last_endpoint_check_result = False
                         return False
                     except:
+                        _last_endpoint_check_result = False
                         return False
                         
-                # 404 or other HTTP errors indicate endpoint problems
+                _last_endpoint_check_result = False
                 return False
                 
             except (httpx.ConnectError, httpx.TimeoutException):
-                # Connection failures indicate service not properly responding
+                _last_endpoint_check_result = False
                 return False
                 
     except ImportError:
@@ -438,6 +422,103 @@ async def test_capture_endpoint_availability() -> bool:
         return True
     except Exception:
         return False
+
+
+@app.post("/api/fingerprint/scan-live")
+@app.post("/fingerprint/scan-live")
+async def scan_live_fingerprint(
+    top_n: int = Form(5, description="Number of top candidates to return"),
+    threshold: Optional[float] = Form(None, description="Custom matching threshold"),
+    force_rectification: bool = Form(False, description="Force DDRNet rectification")
+):
+    """
+    Capture live optical fingerprint from SecuGen Hamster Pro 20 directly on server
+    and run through 1:N identification pipeline.
+    """
+    global _capture_in_progress
+
+    with _capture_lock:
+        if _capture_in_progress:
+            raise HTTPException(
+                status_code=409,
+                detail="Another fingerprint scan is currently in progress. Please wait."
+            )
+        _capture_in_progress = True
+
+    try:
+        captured_image = None
+        quality = 0
+        method = "Native Hardware"
+
+        # Try Native Driver first
+        try:
+            from secugen_scanner import SecuGenNativeScanner
+            with SecuGenNativeScanner() as scanner:
+                captured_image, quality = scanner.capture_image(timeout_sec=20, quality_min=30)
+                method = "SecuGen Native FDx Driver"
+        except TimeoutError:
+            raise HTTPException(
+                status_code=408,
+                detail="Capture timed out: Please place your finger firmly and flatly on the scanner prism."
+            )
+        except Exception as native_err:
+            # Fallback to WebAPI via Python
+            try:
+                import urllib.request, urllib.parse, ssl
+                ctx = ssl.create_default_context()
+                ctx.check_hostname = False
+                ctx.verify_mode = ssl.CERT_NONE
+                params = {
+                    "Timeout": "20000",
+                    "Quality": "40",
+                    "licstr": os.getenv("SECUGEN_LIC", ""),
+                    "fakeDetection": "0",
+                    "templateFormat": "0",
+                    "imageWSQRate": "0.75",
+                }
+                data = urllib.parse.urlencode(params).encode("utf-8")
+                req = urllib.request.Request(f"{SECUGEN_BASE_URL}{SECUGEN_CAPTURE_ENDPOINT}", data=data)
+                with urllib.request.urlopen(req, context=ctx, timeout=25.0) as resp:
+                    resp_data = json.loads(resp.read().decode("utf-8"))
+                    if resp_data.get("ErrorCode", -1) != 0:
+                        raise ValueError(f"SecuGen ErrorCode: {resp_data.get('ErrorCode')}")
+                    b64 = resp_data.get("BMPBase64")
+                    raw = base64.b64decode(b64)
+                    captured_image = cv2.imdecode(np.frombuffer(raw, dtype=np.uint8), cv2.IMREAD_GRAYSCALE)
+                    quality = resp_data.get("ImageQuality", 0)
+                    method = "SecuGen WebAPI Fallback"
+            except Exception as webapi_err:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Scanner capture failed: Native driver error ({native_err}), WebAPI error ({webapi_err})"
+                )
+
+        if captured_image is None or captured_image.size == 0:
+            raise HTTPException(status_code=500, detail="Captured image is empty or invalid.")
+
+        if threshold is not None:
+            t_thresh = threshold if threshold > 1.0 else (threshold * 100.0 if threshold > 0.0 else MATCH_THRESHOLD)
+        else:
+            t_thresh = MATCH_THRESHOLD
+
+        # Run identification pipeline
+        result = identify_fingerprint(
+            fingerprint_image=captured_image,
+            top_n=top_n,
+            threshold=t_thresh,
+            force_rectification=force_rectification
+        )
+
+        h, w = captured_image.shape
+        result['capture_method'] = method
+        result['capture_dimensions'] = f"{w}x{h}"
+        result['capture_quality'] = quality
+
+        return result
+
+    finally:
+        with _capture_lock:
+            _capture_in_progress = False
 
 
 @app.post("/api/fingerprint/capture-and-search")
@@ -851,6 +932,100 @@ async def run_evaluation(
         return res
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Evaluation protocol failed: {str(e)}")
+
+
+# ============================================================
+# TOP-1 & TOP-5 ACCURACY EVALUATION ENDPOINTS
+# ============================================================
+
+_accuracy_eval_lock = threading.Lock()
+_accuracy_eval_in_progress = False
+
+
+@app.get("/evaluation/accuracy")
+@app.get("/api/evaluation/accuracy")
+def get_matching_accuracy():
+    """Retrieve measured Top-1 and Top-5 fingerprint matching accuracy metrics."""
+    summary_file = CURRENT_DIR / "experiments" / "evaluation_results" / "matching_accuracy_summary.json"
+    if not summary_file.exists():
+        # Fall back to regenerating or checking cache
+        from evaluate_matching_accuracy import run_accuracy_evaluation, EXISTING_EVAL_CSV
+        if EXISTING_EVAL_CSV.exists():
+            try:
+                return run_accuracy_evaluation(reuse_cached_predictions=True)
+            except Exception:
+                pass
+        return {
+            "status": "Evaluation not run",
+            "message": "Evaluation has not been executed yet. Run evaluate_matching_accuracy.py or trigger via /api/evaluation/accuracy/run"
+        }
+
+    try:
+        with open(summary_file, mode="r", encoding="utf-8") as f:
+            data = json.load(f)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read evaluation summary: {str(e)}")
+
+
+@app.post("/evaluation/accuracy/run")
+@app.post("/api/evaluation/accuracy/run")
+async def run_matching_accuracy_api(
+    sample_limit: Optional[int] = Form(None, description="Limit number of queries evaluated for speed"),
+    force_rectification: bool = Form(False, description="Force DDRNet rectification on all queries"),
+    reuse_cached_predictions: bool = Form(False, description="Reuse verified precomputed 317-query predictions"),
+):
+    """
+    Execute Top-1 and Top-5 matching accuracy evaluation on the gallery.
+    """
+    global _accuracy_eval_in_progress
+    with _accuracy_eval_lock:
+        if _accuracy_eval_in_progress:
+            raise HTTPException(
+                status_code=409,
+                detail="Accuracy evaluation is already running. Please wait for the current job to finish."
+            )
+        _accuracy_eval_in_progress = True
+
+    try:
+        from evaluate_matching_accuracy import run_accuracy_evaluation
+        summary = run_accuracy_evaluation(
+            sample_limit=sample_limit,
+            force_rectification=force_rectification,
+            reuse_cached_predictions=reuse_cached_predictions,
+        )
+        return summary
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Evaluation failed: {str(e)}")
+    finally:
+        with _accuracy_eval_lock:
+            _accuracy_eval_in_progress = False
+
+
+@app.get("/evaluation/accuracy/predictions")
+@app.get("/api/evaluation/accuracy/predictions")
+def get_matching_predictions(limit: int = 50, offset: int = 0):
+    """Retrieve per-query prediction records for audit and dashboard inspection."""
+    import csv
+    pred_file = CURRENT_DIR / "experiments" / "evaluation_results" / "matching_accuracy_predictions.csv"
+    if not pred_file.exists():
+        return {"total": 0, "predictions": []}
+
+    rows = []
+    try:
+        with open(pred_file, mode="r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                rows.append(row)
+        return {
+            "total": len(rows),
+            "limit": limit,
+            "offset": offset,
+            "predictions": rows[offset : offset + limit],
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to read predictions: {str(e)}")
+
 
 
 # ============================================================

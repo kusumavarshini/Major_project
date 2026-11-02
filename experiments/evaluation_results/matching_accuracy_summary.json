@@ -1,0 +1,48 @@
+{
+  "status": "completed",
+  "dataset_name": "FVC-Latent_Test_Dataset (Latent_fvc)",
+  "gallery_table": "newdb.external_fvc_clean_gallery",
+  "threshold": 80.0,
+  "evaluation_protocol": "SourceAFIS 1:N matching against enrolled clean gallery. Genuine trials measure verification score of ground-truth candidate against threshold. Impostor trials measure all cross-identity comparisons against threshold.",
+  "total_discovered_queries": 317,
+  "valid_evaluated_queries": 317,
+  "excluded_queries_count": 0,
+  "gallery_templates_count": 328,
+  "gallery_identities_count": 328,
+  "total_genuine_trials": 317,
+  "total_impostor_trials": 103659,
+  "performance_measures": {
+    "query_count": {
+      "before": 317,
+      "after": 317
+    },
+    "top1_accuracy": {
+      "before": 5.99,
+      "after": 5.99,
+      "before_count": 19,
+      "after_count": 19
+    },
+    "top5_accuracy": {
+      "before": 9.78,
+      "after": 10.09,
+      "before_count": 31,
+      "after_count": 32
+    },
+    "far": {
+      "before": 0.0203,
+      "after": 0.0203,
+      "before_false_accepts": 21,
+      "after_false_accepts": 21,
+      "trials": 103659
+    },
+    "frr": {
+      "before": 97.79,
+      "after": 98.11,
+      "before_false_rejects": 310,
+      "after_false_rejects": 311,
+      "trials": 317
+    }
+  },
+  "execution_time_seconds": 2.07,
+  "timestamp": "2026-10-15 11:10:12"
+}

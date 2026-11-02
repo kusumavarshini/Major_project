@@ -1,0 +1,1079 @@
+{
+  "metadata": {
+    "report_title": "FingerSure Physical Dataset Collection Validation Report",
+    "timestamp": "2026-11-02T17:48:04",
+    "dataset_directory": "C:\\Users\\kusum\\OneDrive\\Desktop\\trial\\Fingerprint-distortion-detection-for-accurate-recognition\\FingerSure_Dataset",
+    "target_benchmark": {
+      "target_participants": 42,
+      "target_clean_per_participant": 10,
+      "target_distorted_per_participant": 10,
+      "target_total_per_participant": 20,
+      "target_clean_images": 420,
+      "target_distorted_images": 420,
+      "target_total_images": 840
+    }
+  },
+  "summary": {
+    "total_participants": 26,
+    "complete_participants_count": 5,
+    "incomplete_participants_count": 21,
+    "total_clean_images": 110,
+    "total_distorted_images": 110,
+    "total_images": 220,
+    "valid_disk_images": 220,
+    "corrupted_images_count": 0,
+    "duplicate_records_count": 0,
+    "failed_captures_count": 64,
+    "missing_captures_count": 300,
+    "progress_pct_total_images": 26.19,
+    "progress_pct_participants": 11.9
+  },
+  "mysql_database_status": {
+    "total_images": 220,
+    "total_participants": 26,
+    "clean_images": 110,
+    "distorted_images": 110,
+    "failed_captures": 64
+  },
+  "per_finger_counts": {
+    "RIGHT_THUMB": {
+      "clean": 26,
+      "distorted": 26,
+      "total": 52
+    },
+    "RIGHT_INDEX": {
+      "clean": 9,
+      "distorted": 9,
+      "total": 18
+    },
+    "RIGHT_MIDDLE": {
+      "clean": 8,
+      "distorted": 8,
+      "total": 16
+    },
+    "RIGHT_RING": {
+      "clean": 8,
+      "distorted": 8,
+      "total": 16
+    },
+    "RIGHT_LITTLE": {
+      "clean": 6,
+      "distorted": 6,
+      "total": 12
+    },
+    "LEFT_THUMB": {
+      "clean": 25,
+      "distorted": 25,
+      "total": 50
+    },
+    "LEFT_INDEX": {
+      "clean": 7,
+      "distorted": 7,
+      "total": 14
+    },
+    "LEFT_MIDDLE": {
+      "clean": 7,
+      "distorted": 7,
+      "total": 14
+    },
+    "LEFT_RING": {
+      "clean": 9,
+      "distorted": 9,
+      "total": 18
+    },
+    "LEFT_LITTLE": {
+      "clean": 5,
+      "distorted": 5,
+      "total": 10
+    }
+  },
+  "per_participant_counts": [
+    {
+      "participant_id": "A",
+      "clean_count": 2,
+      "distorted_count": 2,
+      "total_completed": 4,
+      "remaining": 16,
+      "is_complete": false,
+      "missing_captures_count": 16,
+      "missing_captures": [
+        "RIGHT_INDEX_CLEAN",
+        "RIGHT_INDEX_DISTORTED",
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_RING_CLEAN",
+        "LEFT_RING_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "B",
+      "clean_count": 2,
+      "distorted_count": 2,
+      "total_completed": 4,
+      "remaining": 16,
+      "is_complete": false,
+      "missing_captures_count": 16,
+      "missing_captures": [
+        "RIGHT_INDEX_CLEAN",
+        "RIGHT_INDEX_DISTORTED",
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_RING_CLEAN",
+        "LEFT_RING_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "BHARTHI",
+      "clean_count": 2,
+      "distorted_count": 2,
+      "total_completed": 4,
+      "remaining": 16,
+      "is_complete": false,
+      "missing_captures_count": 16,
+      "missing_captures": [
+        "RIGHT_INDEX_CLEAN",
+        "RIGHT_INDEX_DISTORTED",
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_RING_CLEAN",
+        "LEFT_RING_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "BHUSHAN",
+      "clean_count": 10,
+      "distorted_count": 10,
+      "total_completed": 20,
+      "remaining": 0,
+      "is_complete": true,
+      "missing_captures_count": 0,
+      "missing_captures": []
+    },
+    {
+      "participant_id": "DHRITHI",
+      "clean_count": 2,
+      "distorted_count": 2,
+      "total_completed": 4,
+      "remaining": 16,
+      "is_complete": false,
+      "missing_captures_count": 16,
+      "missing_captures": [
+        "RIGHT_INDEX_CLEAN",
+        "RIGHT_INDEX_DISTORTED",
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_RING_CLEAN",
+        "LEFT_RING_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "DISHA",
+      "clean_count": 2,
+      "distorted_count": 2,
+      "total_completed": 4,
+      "remaining": 16,
+      "is_complete": false,
+      "missing_captures_count": 16,
+      "missing_captures": [
+        "RIGHT_INDEX_CLEAN",
+        "RIGHT_INDEX_DISTORTED",
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_RING_CLEAN",
+        "LEFT_RING_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "GANESH",
+      "clean_count": 2,
+      "distorted_count": 2,
+      "total_completed": 4,
+      "remaining": 16,
+      "is_complete": false,
+      "missing_captures_count": 16,
+      "missing_captures": [
+        "RIGHT_INDEX_CLEAN",
+        "RIGHT_INDEX_DISTORTED",
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_RING_CLEAN",
+        "LEFT_RING_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "HARSHITHA",
+      "clean_count": 10,
+      "distorted_count": 10,
+      "total_completed": 20,
+      "remaining": 0,
+      "is_complete": true,
+      "missing_captures_count": 0,
+      "missing_captures": []
+    },
+    {
+      "participant_id": "HRUDHYA",
+      "clean_count": 1,
+      "distorted_count": 1,
+      "total_completed": 2,
+      "remaining": 18,
+      "is_complete": false,
+      "missing_captures_count": 18,
+      "missing_captures": [
+        "RIGHT_INDEX_CLEAN",
+        "RIGHT_INDEX_DISTORTED",
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_THUMB_CLEAN",
+        "LEFT_THUMB_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_RING_CLEAN",
+        "LEFT_RING_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "INCHARA",
+      "clean_count": 10,
+      "distorted_count": 10,
+      "total_completed": 20,
+      "remaining": 0,
+      "is_complete": true,
+      "missing_captures_count": 0,
+      "missing_captures": []
+    },
+    {
+      "participant_id": "ISSA",
+      "clean_count": 2,
+      "distorted_count": 2,
+      "total_completed": 4,
+      "remaining": 16,
+      "is_complete": false,
+      "missing_captures_count": 16,
+      "missing_captures": [
+        "RIGHT_INDEX_CLEAN",
+        "RIGHT_INDEX_DISTORTED",
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_RING_CLEAN",
+        "LEFT_RING_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "JYOTHIKA",
+      "clean_count": 2,
+      "distorted_count": 2,
+      "total_completed": 4,
+      "remaining": 16,
+      "is_complete": false,
+      "missing_captures_count": 16,
+      "missing_captures": [
+        "RIGHT_INDEX_CLEAN",
+        "RIGHT_INDEX_DISTORTED",
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_RING_CLEAN",
+        "LEFT_RING_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "JYOTHSNIKA",
+      "clean_count": 4,
+      "distorted_count": 4,
+      "total_completed": 8,
+      "remaining": 12,
+      "is_complete": false,
+      "missing_captures_count": 12,
+      "missing_captures": [
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "KUSUMA",
+      "clean_count": 8,
+      "distorted_count": 8,
+      "total_completed": 16,
+      "remaining": 4,
+      "is_complete": false,
+      "missing_captures_count": 4,
+      "missing_captures": [
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "LAKSHMI",
+      "clean_count": 10,
+      "distorted_count": 10,
+      "total_completed": 20,
+      "remaining": 0,
+      "is_complete": true,
+      "missing_captures_count": 0,
+      "missing_captures": []
+    },
+    {
+      "participant_id": "MANAL",
+      "clean_count": 2,
+      "distorted_count": 2,
+      "total_completed": 4,
+      "remaining": 16,
+      "is_complete": false,
+      "missing_captures_count": 16,
+      "missing_captures": [
+        "RIGHT_INDEX_CLEAN",
+        "RIGHT_INDEX_DISTORTED",
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_RING_CLEAN",
+        "LEFT_RING_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "MANGALAMMA",
+      "clean_count": 9,
+      "distorted_count": 9,
+      "total_completed": 18,
+      "remaining": 2,
+      "is_complete": false,
+      "missing_captures_count": 2,
+      "missing_captures": [
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "MANYA",
+      "clean_count": 2,
+      "distorted_count": 2,
+      "total_completed": 4,
+      "remaining": 16,
+      "is_complete": false,
+      "missing_captures_count": 16,
+      "missing_captures": [
+        "RIGHT_INDEX_CLEAN",
+        "RIGHT_INDEX_DISTORTED",
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_RING_CLEAN",
+        "LEFT_RING_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "MEGHANA",
+      "clean_count": 6,
+      "distorted_count": 6,
+      "total_completed": 12,
+      "remaining": 8,
+      "is_complete": false,
+      "missing_captures_count": 8,
+      "missing_captures": [
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "NEHA",
+      "clean_count": 10,
+      "distorted_count": 10,
+      "total_completed": 20,
+      "remaining": 0,
+      "is_complete": true,
+      "missing_captures_count": 0,
+      "missing_captures": []
+    },
+    {
+      "participant_id": "PRIYANKA",
+      "clean_count": 2,
+      "distorted_count": 2,
+      "total_completed": 4,
+      "remaining": 16,
+      "is_complete": false,
+      "missing_captures_count": 16,
+      "missing_captures": [
+        "RIGHT_INDEX_CLEAN",
+        "RIGHT_INDEX_DISTORTED",
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_RING_CLEAN",
+        "LEFT_RING_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "RIGZIN",
+      "clean_count": 2,
+      "distorted_count": 2,
+      "total_completed": 4,
+      "remaining": 16,
+      "is_complete": false,
+      "missing_captures_count": 16,
+      "missing_captures": [
+        "RIGHT_INDEX_CLEAN",
+        "RIGHT_INDEX_DISTORTED",
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_RING_CLEAN",
+        "LEFT_RING_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "SANJANA",
+      "clean_count": 2,
+      "distorted_count": 2,
+      "total_completed": 4,
+      "remaining": 16,
+      "is_complete": false,
+      "missing_captures_count": 16,
+      "missing_captures": [
+        "RIGHT_INDEX_CLEAN",
+        "RIGHT_INDEX_DISTORTED",
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_RING_CLEAN",
+        "LEFT_RING_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "SHUBAN",
+      "clean_count": 2,
+      "distorted_count": 2,
+      "total_completed": 4,
+      "remaining": 16,
+      "is_complete": false,
+      "missing_captures_count": 16,
+      "missing_captures": [
+        "RIGHT_INDEX_CLEAN",
+        "RIGHT_INDEX_DISTORTED",
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_RING_CLEAN",
+        "LEFT_RING_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "SUSHMITHA",
+      "clean_count": 2,
+      "distorted_count": 2,
+      "total_completed": 4,
+      "remaining": 16,
+      "is_complete": false,
+      "missing_captures_count": 16,
+      "missing_captures": [
+        "RIGHT_INDEX_CLEAN",
+        "RIGHT_INDEX_DISTORTED",
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_RING_CLEAN",
+        "LEFT_RING_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    },
+    {
+      "participant_id": "THRYAEE",
+      "clean_count": 2,
+      "distorted_count": 2,
+      "total_completed": 4,
+      "remaining": 16,
+      "is_complete": false,
+      "missing_captures_count": 16,
+      "missing_captures": [
+        "RIGHT_INDEX_CLEAN",
+        "RIGHT_INDEX_DISTORTED",
+        "RIGHT_MIDDLE_CLEAN",
+        "RIGHT_MIDDLE_DISTORTED",
+        "RIGHT_RING_CLEAN",
+        "RIGHT_RING_DISTORTED",
+        "RIGHT_LITTLE_CLEAN",
+        "RIGHT_LITTLE_DISTORTED",
+        "LEFT_INDEX_CLEAN",
+        "LEFT_INDEX_DISTORTED",
+        "LEFT_MIDDLE_CLEAN",
+        "LEFT_MIDDLE_DISTORTED",
+        "LEFT_RING_CLEAN",
+        "LEFT_RING_DISTORTED",
+        "LEFT_LITTLE_CLEAN",
+        "LEFT_LITTLE_DISTORTED"
+      ]
+    }
+  ],
+  "corrupted_images": [],
+  "duplicate_records": [],
+  "failed_captures_recent": [
+    {
+      "participant_id": "RIGZIN",
+      "hand": "RIGHT",
+      "finger": "MIDDLE",
+      "condition": 0,
+      "error_message": "Capture timed out: Sensor did not detect sufficient finger contact. Place finger flatly on the glass prism and apply steady pressure.",
+      "capture_timestamp": "2026-11-02T15:34:22",
+      "scanner_model": NaN,
+      "scanner_serial_number": NaN
+    },
+    {
+      "participant_id": "RIGZIN",
+      "hand": "RIGHT",
+      "finger": "MIDDLE",
+      "condition": 0,
+      "error_message": "Capture timed out: Sensor did not detect sufficient finger contact. Place finger flatly on the glass prism and apply steady pressure.",
+      "capture_timestamp": "2026-11-02T15:34:44",
+      "scanner_model": NaN,
+      "scanner_serial_number": NaN
+    },
+    {
+      "participant_id": "RIGZIN",
+      "hand": "LEFT",
+      "finger": "THUMB",
+      "condition": 1,
+      "error_message": "Capture timed out: Sensor did not detect sufficient finger contact. Place finger flatly on the glass prism and apply steady pressure.",
+      "capture_timestamp": "2026-11-02T15:36:26",
+      "scanner_model": NaN,
+      "scanner_serial_number": NaN
+    },
+    {
+      "participant_id": "RIGZIN",
+      "hand": "LEFT",
+      "finger": "THUMB",
+      "condition": 1,
+      "error_message": "Capture timed out: Sensor did not detect sufficient finger contact. Place finger flatly on the glass prism and apply steady pressure.",
+      "capture_timestamp": "2026-11-02T15:37:17",
+      "scanner_model": NaN,
+      "scanner_serial_number": NaN
+    },
+    {
+      "participant_id": "RIGZIN",
+      "hand": "LEFT",
+      "finger": "INDEX",
+      "condition": 0,
+      "error_message": "Capture timed out: Sensor did not detect sufficient finger contact. Place finger flatly on the glass prism and apply steady pressure.",
+      "capture_timestamp": "2026-11-02T15:38:16",
+      "scanner_model": NaN,
+      "scanner_serial_number": NaN
+    },
+    {
+      "participant_id": "RIGZIN",
+      "hand": "LEFT",
+      "finger": "MIDDLE",
+      "condition": 0,
+      "error_message": "Capture timed out: Sensor did not detect sufficient finger contact. Place finger flatly on the glass prism and apply steady pressure.",
+      "capture_timestamp": "2026-11-02T15:38:52",
+      "scanner_model": NaN,
+      "scanner_serial_number": NaN
+    },
+    {
+      "participant_id": "KUSUMA",
+      "hand": "RIGHT",
+      "finger": "LITTLE",
+      "condition": 0,
+      "error_message": "Capture timed out: Sensor did not detect sufficient finger contact. Place finger flatly on the glass prism and apply steady pressure.",
+      "capture_timestamp": "2026-11-02T17:34:51",
+      "scanner_model": NaN,
+      "scanner_serial_number": NaN
+    },
+    {
+      "participant_id": "KUSUMA",
+      "hand": "RIGHT",
+      "finger": "LITTLE",
+      "condition": 0,
+      "error_message": "Capture timed out: Sensor did not detect sufficient finger contact. Place finger flatly on the glass prism and apply steady pressure.",
+      "capture_timestamp": "2026-11-02T17:35:28",
+      "scanner_model": NaN,
+      "scanner_serial_number": NaN
+    },
+    {
+      "participant_id": "KUSUMA",
+      "hand": "RIGHT",
+      "finger": "LITTLE",
+      "condition": 1,
+      "error_message": "Capture timed out: Sensor did not detect sufficient finger contact. Place finger flatly on the glass prism and apply steady pressure.",
+      "capture_timestamp": "2026-11-02T17:36:44",
+      "scanner_model": NaN,
+      "scanner_serial_number": NaN
+    },
+    {
+      "participant_id": "KUSUMA",
+      "hand": "LEFT",
+      "finger": "LITTLE",
+      "condition": 0,
+      "error_message": "Capture timed out: Sensor did not detect sufficient finger contact. Place finger flatly on the glass prism and apply steady pressure.",
+      "capture_timestamp": "2026-11-02T17:37:16",
+      "scanner_model": NaN,
+      "scanner_serial_number": NaN
+    }
+  ],
+  "missing_captures_sample": [
+    {
+      "participant_id": "A",
+      "hand": "RIGHT",
+      "finger": "INDEX",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "A",
+      "hand": "RIGHT",
+      "finger": "INDEX",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "A",
+      "hand": "RIGHT",
+      "finger": "MIDDLE",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "A",
+      "hand": "RIGHT",
+      "finger": "MIDDLE",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "A",
+      "hand": "RIGHT",
+      "finger": "RING",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "A",
+      "hand": "RIGHT",
+      "finger": "RING",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "A",
+      "hand": "RIGHT",
+      "finger": "LITTLE",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "A",
+      "hand": "RIGHT",
+      "finger": "LITTLE",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "A",
+      "hand": "LEFT",
+      "finger": "INDEX",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "A",
+      "hand": "LEFT",
+      "finger": "INDEX",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "A",
+      "hand": "LEFT",
+      "finger": "MIDDLE",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "A",
+      "hand": "LEFT",
+      "finger": "MIDDLE",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "A",
+      "hand": "LEFT",
+      "finger": "RING",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "A",
+      "hand": "LEFT",
+      "finger": "RING",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "A",
+      "hand": "LEFT",
+      "finger": "LITTLE",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "A",
+      "hand": "LEFT",
+      "finger": "LITTLE",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "B",
+      "hand": "RIGHT",
+      "finger": "INDEX",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "B",
+      "hand": "RIGHT",
+      "finger": "INDEX",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "B",
+      "hand": "RIGHT",
+      "finger": "MIDDLE",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "B",
+      "hand": "RIGHT",
+      "finger": "MIDDLE",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "B",
+      "hand": "RIGHT",
+      "finger": "RING",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "B",
+      "hand": "RIGHT",
+      "finger": "RING",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "B",
+      "hand": "RIGHT",
+      "finger": "LITTLE",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "B",
+      "hand": "RIGHT",
+      "finger": "LITTLE",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "B",
+      "hand": "LEFT",
+      "finger": "INDEX",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "B",
+      "hand": "LEFT",
+      "finger": "INDEX",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "B",
+      "hand": "LEFT",
+      "finger": "MIDDLE",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "B",
+      "hand": "LEFT",
+      "finger": "MIDDLE",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "B",
+      "hand": "LEFT",
+      "finger": "RING",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "B",
+      "hand": "LEFT",
+      "finger": "RING",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "B",
+      "hand": "LEFT",
+      "finger": "LITTLE",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "B",
+      "hand": "LEFT",
+      "finger": "LITTLE",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "BHARTHI",
+      "hand": "RIGHT",
+      "finger": "INDEX",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "BHARTHI",
+      "hand": "RIGHT",
+      "finger": "INDEX",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "BHARTHI",
+      "hand": "RIGHT",
+      "finger": "MIDDLE",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "BHARTHI",
+      "hand": "RIGHT",
+      "finger": "MIDDLE",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "BHARTHI",
+      "hand": "RIGHT",
+      "finger": "RING",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "BHARTHI",
+      "hand": "RIGHT",
+      "finger": "RING",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "BHARTHI",
+      "hand": "RIGHT",
+      "finger": "LITTLE",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "BHARTHI",
+      "hand": "RIGHT",
+      "finger": "LITTLE",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "BHARTHI",
+      "hand": "LEFT",
+      "finger": "INDEX",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "BHARTHI",
+      "hand": "LEFT",
+      "finger": "INDEX",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "BHARTHI",
+      "hand": "LEFT",
+      "finger": "MIDDLE",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "BHARTHI",
+      "hand": "LEFT",
+      "finger": "MIDDLE",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "BHARTHI",
+      "hand": "LEFT",
+      "finger": "RING",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "BHARTHI",
+      "hand": "LEFT",
+      "finger": "RING",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "BHARTHI",
+      "hand": "LEFT",
+      "finger": "LITTLE",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "BHARTHI",
+      "hand": "LEFT",
+      "finger": "LITTLE",
+      "condition": "DISTORTED"
+    },
+    {
+      "participant_id": "DHRITHI",
+      "hand": "RIGHT",
+      "finger": "INDEX",
+      "condition": "CLEAN"
+    },
+    {
+      "participant_id": "DHRITHI",
+      "hand": "RIGHT",
+      "finger": "INDEX",
+      "condition": "DISTORTED"
+    }
+  ]
+}

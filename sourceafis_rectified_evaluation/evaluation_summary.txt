@@ -1,0 +1,154 @@
+====================================================================================================
+FINGERSURE: SOURCEAFIS BIOMETRIC EVALUATION REPORT (RECTIFIED DDRNET TEST DATASET)
+====================================================================================================
+Date of Evaluation : 2026-10-29 21:57:25
+Project            : FingerSure: Fingerprint Distortion Rectification for Accurate Recognition
+Evaluation Target  : 675 DDRNet-Rectified Test Queries vs. 225 Original Distorted Fingerprints
+Clean Gallery      : 225 Clean Reference Fingerprints across 45 Individual Person Identities (data/split/test)
+Biometric Engine   : SourceAFIS Invariant Structural Edge Crawling (matcher.py / SourceAFISMatcher)
+Operating Threshold: 50.0 (SourceAFIS Raw Decision Score)
+Denominators Used  : Stated explicitly per metric (valid successfully evaluated queries)
+
+----------------------------------------------------------------------------------------------------
+1. DATASET AND GALLERY VERIFICATION SUMMARY
+----------------------------------------------------------------------------------------------------
+- DDRNet-Rectified Images Folder   : data/rectified_ddrnet_test
+  - Verified Total File Count      : 675 PNG images (exactly 675)
+  - Verified Number of Families    : 15 families (15 families, 45 queries per family)
+  - Verified Families List         : ['FAMILY-13', 'FAMILY-14', 'FAMILY-15', 'FAMILY-20', 'FAMILY-23', 'FAMILY-36', 'FAMILY-37', 'FAMILY-42', 'FAMILY-48', 'FAMILY-54', 'FAMILY-65', 'FAMILY-66', 'FAMILY-67', 'FAMILY-78', 'FAMILY-9']
+  - Distortion Types Distribution  : Bending: 225 | Elastic: 225 | Local: 225 (Total: 675)
+  - Nature of Queries              : 45 individual identities x 5 impressions x 3 distortion models = 675
+
+- Clean Reference Gallery Folder   : data/split/test
+  - Verified Total File Count      : 225 PNG images (exactly 225)
+  - Number of Eligible Identities  : 45 distinct identities (15 families x 3 members)
+  - Gallery Enrollment Structure   : 5 clean impressions per identity (C1-C5, F1-F5, M1-M5)
+  - Aggregation Rule               : Max-score across eligible clean reference templates of each candidate
+  - Self-Scan Prevention Rule      : When querying finger stem S, clean template with stem S is EXCLUDED
+                                     from the genuine candidate set, guaranteeing zero self-matching leakage.
+
+- Original Distorted Folder        : data/test_distorted/distorted
+  - Verified Total File Count      : 225 PNG images (exactly 225)
+  - Metadata Rows (distortion_meta): 225 rows (75 Bending, 75 Elastic, 75 Local)
+  - Direct Paired Matches          : Exactly 225 queries directly match by family, member, stem, & distortion
+
+- Database Inspection (MySQL newdb.external_fvc_clean_gallery):
+  - Verified Schema and Contents   : Table contains 318 FVC clean templates (fingerprint_id 1..318).
+  - Compatibility Determination    : Incompatible with Family Fingerprint identities. The correct reference
+                                     gallery specified for this evaluation is 'data/split/test'.
+
+----------------------------------------------------------------------------------------------------
+2. CONDITION B RESULTS: 675 DDRNET-RECTIFIED FINGERPRINT QUERIES
+----------------------------------------------------------------------------------------------------
+Evaluated against the 45 clean gallery identities (225 clean templates, max-score aggregation, self-exclusion):
+
+Overall 675 Rectified Queries:
+  - Total Queries Evaluated        : 675
+  - Successfully Processed Queries : 658 / 675 (100.0%)
+  - Failed or Skipped Queries      : 17 (0 FTA)
+  - Top-1 Identification Accuracy  : 3.50% (23/658)
+  - Top-5 Identification Accuracy  : 12.77% (84/658)
+  - Cumulative Match Characteristic:
+      Rank-1: 3.50% | Rank-2: 6.84% | Rank-3: 8.97% | Rank-4: 11.70% | Rank-5: 12.77%
+  - Mean Genuine Match Score       : 47.26 (Median: 45.98, Range: 0.00 - 109.50)
+  - Mean Impostor Match Score      : 46.51 (Median: 45.29, Max: 161.24)
+  - False Rejection Rate (FRR @50) : 60.18% (396/658)
+  - False Acceptance Rate (FAR @50): 35.5485% (10292/28952 trials)
+  - Mean Extracted Minutiae Count  : 46.88 minutiae/query
+
+Breakdown by Distortion Type (Rectified):
+  - Bending Distortion (225 queries):
+      Top-1 Accuracy: 3.65% (8/225) | Top-5 Accuracy: 12.79% (28/225)
+      Mean Genuine Score: 48.07 | FRR: 57.53% | FAR: 37.9618% | Mean Minutiae: 47.10
+  - Elastic Distortion (225 queries):
+      Top-1 Accuracy: 5.00% (11/225) | Top-5 Accuracy: 11.82% (26/225)
+      Mean Genuine Score: 46.35 | FRR: 64.55% | FAR: 31.7562% | Mean Minutiae: 47.51
+  - Local Distortion (225 queries):
+      Top-1 Accuracy: 1.83% (4/225) | Top-5 Accuracy: 13.70% (30/225)
+      Mean Genuine Score: 47.37 | FRR: 58.45% | FAR: 36.9448% | Mean Minutiae: 46.03
+
+----------------------------------------------------------------------------------------------------
+3. CONDITION A RESULTS: 225 ORIGINAL DISTORTED FINGERPRINT QUERIES
+----------------------------------------------------------------------------------------------------
+Overall 225 Original Distorted Queries:
+  - Total Queries Evaluated        : 225
+  - Successfully Processed Queries : 222 / 225 (100.0%)
+  - Failed or Skipped Queries      : 3 (0 FTA)
+  - Top-1 Identification Accuracy  : 3.15% (7/222)
+  - Top-5 Identification Accuracy  : 11.71% (26/222)
+  - Cumulative Match Characteristic:
+      Rank-1: 3.15% | Rank-2: 5.86% | Rank-3: 8.56% | Rank-4: 10.36% | Rank-5: 11.71%
+  - Mean Genuine Match Score       : 51.37 (Median: 49.12)
+  - False Rejection Rate (FRR @50) : 53.15% (118/222)
+  - False Acceptance Rate (FAR @50): 46.5192% (4544/9768 trials)
+  - Mean Extracted Minutiae Count  : 53.68 minutiae/query
+
+----------------------------------------------------------------------------------------------------
+4. BEFORE VS. AFTER RECTIFICATION COMPARISON (225 DIRECT PAIRED QUERIES)
+----------------------------------------------------------------------------------------------------
+Both conditions evaluated under the identical clean gallery, SourceAFIS engine, and matching settings:
+
++-----------------------------------------+--------------------+-------------------+--------------------+
+| Metric                                  | Before (Distorted) | After (Rectified) | Absolute Impact    |
++-----------------------------------------+--------------------+-------------------+--------------------+
+| Evaluated Paired Queries (Denominator)  | 222                | 219               | 0 queries          |
+| Top-1 Identification Accuracy           |   3.15% (7/222)  |   2.28% (5/219) |  -0.87% pp      |
+| Top-5 Identification Accuracy           |  11.71% (26/222)  |  12.33% (27/219) |  +0.62% pp      |
+| False Rejection Rate (FRR @ 50.0)       |  53.15%           |  62.56%          |  +9.41% pp      |
+| False Acceptance Rate (FAR @ 50.0)      | 46.5192%          | 35.9589%         | -10.5603% pp    |
+| Mean Genuine Match Score                |  51.37             |  47.08            |  -4.29 points     |
+| Median Genuine Match Score              |  49.12             |  45.40            |  -3.72 points     |
+| Mean Extracted Minutiae Count           |  53.68             |  47.58            |  -6.10 minutiae   |
++-----------------------------------------+--------------------+-------------------+--------------------+
+
+Per-Query Rank Shifts Across All 225 Paired Queries:
+  - Improved Rank  : 103 queries (45.78%)
+  - Degraded Rank  : 120 queries (53.33%)
+  - Unchanged Rank : 2 queries (0.89%)
+
+----------------------------------------------------------------------------------------------------
+5. METHODOLOGICAL FINDINGS AND BIOMETRIC DISCUSSION
+----------------------------------------------------------------------------------------------------
+1. Neural Grid Resampling Smoothing:
+   DDRNet produces continuous coordinate displacement fields applied via spatial bilinear interpolation
+   (torch.nn.functional.grid_sample). While this continuous warping shifts pixels, the bilinear interpolation
+   smooths sharp ridge boundaries and valleys.
+
+2. SourceAFIS Minutiae Extraction Impact:
+   SourceAFIS relies on clean local ridge binarization, thinning, and ridge skeleton tracing. The smoothed
+   ridge profiles in rectified images reduce high-confidence minutiae detection and perturb fine minutiae
+   orientations. Mean extracted minutiae count drops from 53.68 (distorted) to 47.58 (rectified).
+
+3. Lack of Physical Inversion Convergence:
+   Rather than restoring genuine ridge topologies to their pristine un-deformed configuration, the displacement
+   fields introduce subtle artificial shear. Consequently, genuine match scores drop from an average of 51.37
+   down to 47.08, and FRR increases by +9.41% pp.
+
+4. Identification Accuracy Conclusion:
+   Under rigorous disjoint clean reference gallery matching (with self-scan exclusion to prevent accidental
+   leakage), DDRNet geometric rectification does NOT improve SourceAFIS biometric identification accuracy.
+   Top-1 accuracy changes by -0.87% pp and Top-5 accuracy changes by +0.62% pp.
+   This empirical conclusion is completely consistent with prior findings in AUDIT_REPORT_FINAL.md and
+   experiments/rectification_quality_diagnostic/REPORT.md.
+
+----------------------------------------------------------------------------------------------------
+6. ARTIFACTS AND REPRODUCTION
+----------------------------------------------------------------------------------------------------
+All evaluation scripts, logs, and results are located in:
+  Fingerprint-distortion-detection-for-accurate-recognition/sourceafis_rectified_evaluation/
+
+Generated files:
+  1. evaluate_rectified.py              : Standalone, reproducible evaluation script
+  2. rectified_matching_results.csv     : Complete per-query results for all 675 rectified queries
+  3. per_query_results.csv              : Combined per-query results (900 rows: 225 distorted + 675 rectified)
+  4. before_after_comparison.csv        : Side-by-side comparison table
+  5. comparison_metrics.csv             : Duplicate metrics comparison table
+  6. identity_mapping.csv               : Validated query-to-gallery identity mapping table
+  7. rectified_evaluation_summary.json  : Machine-readable metric values and counts
+  8. rectified_evaluation_report.txt    : Comprehensive human-readable report
+  9. evaluation_summary.txt             : Identical copy of comprehensive summary report
+  10. evaluation_log.txt                : Timestamped execution and progress log
+
+Exact command to rerun the evaluation:
+  .\Fingerprint-distortion-detection-for-accurate-recognition\.venv\Scripts\python.exe Fingerprint-distortion-detection-for-accurate-recognition\sourceafis_rectified_evaluation\evaluate_rectified.py
+====================================================================================================

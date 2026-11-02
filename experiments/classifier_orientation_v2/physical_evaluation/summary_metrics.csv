@@ -1,0 +1,24 @@
+Metric,Value
+Total Samples,84.0
+Clean Samples,42.0
+Distorted Samples,42.0
+Locked Threshold,0.5
+Correctly Classified,42.0
+Incorrectly Classified,42.0
+Accuracy (%),50.0
+Precision (%),0.0
+Recall (%),0.0
+F1-Score (%),0.0
+Specificity (%),100.0
+Balanced Accuracy (%),50.0
+ROC-AUC,0.7517
+False Positive Rate (%),0.0
+False Negative Rate (%),100.0
+True Negatives (TN),42.0
+False Positives (FP),0.0
+False Negatives (FN),42.0
+True Positives (TP),0.0
+Clean Accuracy (%),100.0
+Distorted Accuracy (%),0.0
+Clean Mean P(Distorted),0.0273
+Distorted Mean P(Distorted),0.086

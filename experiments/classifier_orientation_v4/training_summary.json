@@ -1,0 +1,92 @@
+{
+  "experiment_name": "classifier_orientation_v4",
+  "date": "2026-11-02T01:45:10.461759",
+  "total_duration_seconds": 5315.0,
+  "device": "CPU (threads: 12, total CPUs: 16)",
+  "model_architecture": "FingerprintCNN",
+  "parameter_count": 389057,
+  "training_configuration": {
+    "optimizer": "Adam",
+    "learning_rate": 0.0001,
+    "weight_decay": 0.0001,
+    "batch_size": 32,
+    "max_epochs": 30,
+    "early_stopping_patience": 9,
+    "seed": 42
+  },
+  "dataset_summary": {
+    "total_images": 6000,
+    "train_images": 4200,
+    "val_images": 900,
+    "test_images": 900,
+    "train_identities": 1050,
+    "val_identities": 225,
+    "test_identities": 225
+  },
+  "best_epoch": 14,
+  "calibrated_threshold": 0.08,
+  "validation_metrics_at_best_epoch": {
+    "threshold": 0.08,
+    "accuracy": 0.9989,
+    "precision": 0.9978,
+    "recall": 1.0,
+    "f1_score": 0.9989,
+    "specificity": 0.9978,
+    "balanced_accuracy": 0.9989,
+    "roc_auc": 1.0,
+    "tp": 450,
+    "fp": 1,
+    "tn": 449,
+    "fn": 0
+  },
+  "test_metrics_at_locked_threshold": {
+    "threshold": 0.08,
+    "accuracy": 0.9967,
+    "precision": 0.9934,
+    "recall": 1.0,
+    "f1_score": 0.9967,
+    "specificity": 0.9933,
+    "balanced_accuracy": 0.9967,
+    "roc_auc": 1.0,
+    "tp": 450,
+    "fp": 3,
+    "tn": 447,
+    "fn": 0
+  },
+  "per_variation_performance": {
+    "clean_original": {
+      "count": 225,
+      "accuracy": 0.9956,
+      "correct": 224,
+      "mean_probability": 0.0027
+    },
+    "clean_rotated": {
+      "count": 225,
+      "accuracy": 0.9911,
+      "correct": 223,
+      "mean_probability": 0.0051
+    },
+    "distorted_elastic_1": {
+      "count": 225,
+      "accuracy": 1.0,
+      "correct": 225,
+      "mean_probability": 0.8861
+    },
+    "distorted_elastic_2": {
+      "count": 225,
+      "accuracy": 1.0,
+      "correct": 225,
+      "mean_probability": 0.8803
+    }
+  },
+  "deliverables": {
+    "best_checkpoint": "experiments\\classifier_orientation_v4\\checkpoints\\best_model.pth",
+    "threshold_json": "experiments\\classifier_orientation_v4\\checkpoints\\threshold.json",
+    "training_history_json": "experiments\\classifier_orientation_v4\\checkpoints\\training_history.json",
+    "test_predictions_csv": "experiments\\classifier_orientation_v4\\test_predictions.csv",
+    "loss_curves_png": "experiments\\classifier_orientation_v4\\loss_curves.png",
+    "metrics_curves_png": "experiments\\classifier_orientation_v4\\metrics_curves.png",
+    "roc_curve_png": "experiments\\classifier_orientation_v4\\roc_curve.png",
+    "confusion_matrix_png": "experiments\\classifier_orientation_v4\\confusion_matrix.png"
+  }
+}

@@ -1,0 +1,5 @@
+Distortion_Type,Total_Queries,Before_Valid_Queries,Before_Top1_Accuracy_Pct,Before_Top1_Count,Before_Top5_Accuracy_Pct,Before_Top5_Count,Before_FAR_Pct,Before_FRR_Pct,After_Valid_Queries,After_Top1_Accuracy_Pct,After_Top1_Count,After_Top5_Accuracy_Pct,After_Top5_Count,After_FAR_Pct,After_FRR_Pct,Improved_Rank,Degraded_Rank,Unchanged_Rank
+Combined,180,171,0.56,1/180,0.56,1/180,13.3185,88.33,169,0.0,0/180,1.11,2/180,9.6191,90.56,87,87,6
+Bending,60,57,0.0,0/60,0.0,0/60,17.1795,85.0,56,0.0,0/60,1.67,1/60,10.3567,90.0,27,29,4
+Elastic,59,55,1.69,1/59,1.69,1/59,10.2999,89.83,54,0.0,0/59,0.0,0/59,7.3635,89.83,29,29,1
+Local,61,59,0.0,0/61,0.0,0/61,12.4404,90.16,59,0.0,0/61,1.64,1/61,11.0752,91.8,31,29,1

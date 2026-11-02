@@ -1,0 +1,113 @@
+{
+  "metadata": {
+    "report_title": "FingerSure Physical Dataset Pair Filtering and Lowercase Normalization Report",
+    "timestamp": "2026-11-02T17:47:54.023380",
+    "dataset_root": "C:\\Users\\kusum\\OneDrive\\Desktop\\trial\\Fingerprint-distortion-detection-for-accurate-recognition\\FingerSure_Dataset"
+  },
+  "metrics": {
+    "1_total_participants_before_cleaning": 34,
+    "2_total_clean_images_before_cleaning": 118,
+    "3_total_distorted_images_before_cleaning": 111,
+    "4_total_image_pairs_before_cleaning": 110,
+    "5_number_of_complete_pairs_retained": 110,
+    "6_number_of_unpaired_clean_images_quarantined": 8,
+    "7_number_of_unpaired_distorted_images_quarantined": 1,
+    "8_number_of_corrupted_images": 0,
+    "9_number_of_duplicate_records_excluded": 2,
+    "10_total_clean_images_after_cleaning": 110,
+    "11_total_distorted_images_after_cleaning": 110,
+    "12_total_images_after_cleaning": 220,
+    "13_number_of_filenames_converted_to_lowercase": 220,
+    "14_filename_collisions_or_unresolved_references": 0
+  },
+  "quarantined_files": [
+    {
+      "filename": "HRUDHYA_RIGHT_INDEX_CLEAN.png",
+      "category": "CLEAN",
+      "reason": "MISSING_DISTORTED_PAIR",
+      "destination": "quarantine/unpaired/clean/HRUDHYA_RIGHT_INDEX_CLEAN.png"
+    },
+    {
+      "filename": "HRUDHYA_RIGHT_MIDDLE_CLEAN.png",
+      "category": "CLEAN",
+      "reason": "MISSING_DISTORTED_PAIR",
+      "destination": "quarantine/unpaired/clean/HRUDHYA_RIGHT_MIDDLE_CLEAN.png"
+    },
+    {
+      "filename": "HRUDHYA_RIGHT_RING_CLEAN.png",
+      "category": "CLEAN",
+      "reason": "MISSING_DISTORTED_PAIR",
+      "destination": "quarantine/unpaired/clean/HRUDHYA_RIGHT_RING_CLEAN.png"
+    },
+    {
+      "filename": "JYOTHSNIKA_LEFT_INDEX_CLEAN.png",
+      "category": "CLEAN",
+      "reason": "MISSING_DISTORTED_PAIR",
+      "destination": "quarantine/unpaired/clean/JYOTHSNIKA_LEFT_INDEX_CLEAN.png"
+    },
+    {
+      "filename": "JYOTHSNIKA_LEFT_MIDDLE_CLEAN.png",
+      "category": "CLEAN",
+      "reason": "MISSING_DISTORTED_PAIR",
+      "destination": "quarantine/unpaired/clean/JYOTHSNIKA_LEFT_MIDDLE_CLEAN.png"
+    },
+    {
+      "filename": "JYOTHSNIKA_RIGHT_MIDDLE_CLEAN.png",
+      "category": "CLEAN",
+      "reason": "MISSING_DISTORTED_PAIR",
+      "destination": "quarantine/unpaired/clean/JYOTHSNIKA_RIGHT_MIDDLE_CLEAN.png"
+    },
+    {
+      "filename": "MANGALAMMA_LEFT_LITTLE_CLEAN.png",
+      "category": "CLEAN",
+      "reason": "MISSING_DISTORTED_PAIR",
+      "destination": "quarantine/unpaired/clean/MANGALAMMA_LEFT_LITTLE_CLEAN.png"
+    },
+    {
+      "filename": "MEGHANA_LEFT_INDEX_CLEAN.png",
+      "category": "CLEAN",
+      "reason": "MISSING_DISTORTED_PAIR",
+      "destination": "quarantine/unpaired/clean/MEGHANA_LEFT_INDEX_CLEAN.png"
+    },
+    {
+      "filename": "JYOTHSNIKA_RIGHT_RING_DISTORTED.png",
+      "category": "DISTORTED",
+      "reason": "MISSING_CLEAN_PAIR",
+      "destination": "quarantine/unpaired/distorted/JYOTHSNIKA_RIGHT_RING_DISTORTED.png"
+    }
+  ],
+  "participants_summary": {
+    "A": 2,
+    "B": 2,
+    "Bharthi": 2,
+    "BHUSHAN": 8,
+    "Bhushan": 2,
+    "Dhrithi": 2,
+    "Disha": 2,
+    "Ganesh": 2,
+    "HARSHITHA": 8,
+    "harshitha": 2,
+    "HRUDHYA": 1,
+    "INCHARA": 10,
+    "issa": 2,
+    "jyothika": 2,
+    "JYOTHSNIKA": 4,
+    "KUSUMA": 6,
+    "Kusuma": 2,
+    "LAKSHMI": 8,
+    "Lakshmi": 2,
+    "manal": 2,
+    "MANGALAMMA": 7,
+    "Mangalamma": 2,
+    "manya": 2,
+    "MEGHANA": 6,
+    "NEHA": 8,
+    "Neha": 2,
+    "Priyanka": 2,
+    "RIGZIN": 2,
+    "Sanjana": 2,
+    "shuban": 2,
+    "sushmitha": 2,
+    "thryaee": 2
+  }
+}

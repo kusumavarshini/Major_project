@@ -1,0 +1,11 @@
+metric,previous_recorded_target,original_matcher_recomputed,current_matcher_value,reproduces_target_with
+Genuine Mean Score,307.125,307.125,477.4384999999999,Original Matcher (100% exact)
+Genuine Median Score,269.75,269.75,417.285,Original Matcher (100% exact)
+Genuine Min Score,71.5,71.5,110.36,Original Matcher (100% exact)
+Genuine Max Score,520.0,520.0,882.15,Original Matcher (100% exact)
+Genuine Mean Matched Minutiae,47.25,47.25,47.25,Both Matchers (47.25 exact)
+Impostor Mean Score,25.315789,25.315789,36.441474,Original Matcher (100% exact)
+Impostor Median Score,26.0,26.0,34.68,Original Matcher (100% exact)
+Impostor Max Score,52.0,52.0,76.28,Original Matcher (100% exact)
+Impostor Scores >= 45 (False Acceptances),8.0,8.0,94.0,Original Matcher (8 exact)
+Impostor FAR (%),2.11,2.11,24.74,Original Matcher (2.11% exact)

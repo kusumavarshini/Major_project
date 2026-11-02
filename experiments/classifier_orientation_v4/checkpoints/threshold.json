@@ -1,0 +1,19 @@
+{
+  "calibrated_threshold": 0.08,
+  "best_epoch": 14,
+  "validation_metrics": {
+    "threshold": 0.08,
+    "accuracy": 0.9989,
+    "precision": 0.9978,
+    "recall": 1.0,
+    "f1_score": 0.9989,
+    "specificity": 0.9978,
+    "balanced_accuracy": 0.9989,
+    "roc_auc": 1.0,
+    "tp": 450,
+    "fp": 1,
+    "tn": 449,
+    "fn": 0
+  },
+  "timestamp": "2026-11-02T01:44:40.405173"
+}

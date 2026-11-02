@@ -1,0 +1,30 @@
+{
+  "audit_timestamp": "2026-11-01T23:02:36.476831",
+  "clean_images_verified": 20,
+  "duplicate_images_found": 0,
+  "total_genuine_comparisons": 20,
+  "total_impostor_comparisons": 380,
+  "impostor_different_identity_verified": true,
+  "deterministic_verification": true,
+  "original_matcher_config": {
+    "source_file": "matcher_backup_original.py",
+    "max_neighbors": 8,
+    "max_edge_length": 300.0,
+    "length_tol": 8.0,
+    "angle_tol": 0.35,
+    "max_roots": 15,
+    "scoring_formula": "raw SourceAFIS score = best_n * 5.0 + best_pairs_cnt * 1.5 (unweighted)",
+    "threshold": 45.0
+  },
+  "current_matcher_config": {
+    "source_file": "matcher.py",
+    "max_neighbors": 10,
+    "max_edge_length": 320.0,
+    "length_tol": 8.0,
+    "angle_tol": 0.35,
+    "max_roots": 25,
+    "scoring_formula": "compute_minutiae_feature_score() = base_score * type_factor * quality_factor * angle_coherence_factor * coverage_factor",
+    "threshold": 45.0
+  },
+  "discrepancy_root_cause": "The previous recorded baseline (Mean genuine: 307.125, FAR: 2.11%) was computed using the unweighted raw SourceAFIS implementation in matcher_backup_original.py with params (max_neighbors=8, max_roots=15). The new local evaluation (Mean genuine: 477.44, FAR: 24.74%) was computed using the active production matcher.py which incorporates rich minutiae feature multipliers (type agreement, quality product, angle coherence, coverage ratio) and relaxed traversal parameters (max_neighbors=10, max_roots=25), multiplying raw scores by ~1.55x - 1.90x."
+}

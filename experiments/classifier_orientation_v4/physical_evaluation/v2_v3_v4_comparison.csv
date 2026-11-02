@@ -1,0 +1,8 @@
+model_version,evaluation_type,threshold,accuracy,precision,recall,specificity,f1_score,balanced_accuracy,roc_auc,tp,fp,tn,fn,fpr,fnr
+Classifier Orientation V4,7-Fold Calibrated OOF,Mean 2.958e-14,0.6905,0.625,0.9524,0.4286,0.7547,0.6905,0.7925,40,24,18,2,0.5714,0.0476
+Classifier Orientation V4,Fixed Locked Threshold (th=0.0800),0.0800,0.5,0.0,0.0,1.0,0.0,0.5,0.7925,0,0,42,42,0.0,1.0
+Classifier Orientation V2,7-Fold Calibrated OOF,Mean 0.0236,0.6548,0.6444,0.6905,0.619,0.6667,0.6548,0.7517,29,16,26,13,0.381,0.3095
+Classifier Orientation V2,Calibrated Candidate (th=0.030),0.0300,0.7024,0.7179,0.6667,0.7381,0.6914,0.7024,0.7517,28,11,31,14,0.2619,0.3333
+Classifier Orientation V2,Fixed Locked Threshold (th=0.500),0.5000,0.5,0.0,0.0,1.0,0.0,0.5,0.7517,0,0,42,42,0.0,1.0
+Classifier V3 (Historical Cited Baseline),Historical Audit Baseline,Historical,0.5,0.5,0.9762,0.0238,0.6613,0.5,0.4257,41,41,1,1,0.9762,0.0238
+Classifier V3 (Original Colab),Fixed Threshold (th=0.500),0.5000,0.381,0.381,0.381,0.381,0.381,0.381,0.3515,16,26,16,26,0.619,0.619

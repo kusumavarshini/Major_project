@@ -1,0 +1,3 @@
+dataset_domain,total_samples,clean_samples,distorted_samples,clean_mean_prob,distorted_mean_prob,clean_prob_range,distorted_prob_range,mean_overall_intensity,mean_ridge_intensity,mean_ridge_p5_darkness,mean_bg_intensity,mean_sharpness_laplacian,mean_fg_coverage_pct
+Synthetic Dataset,900,225,675,0.050395,0.967944,"[0.023892, 0.548899]","[0.604425, 0.999892]",211.92,151.91,112.98,238.24,318.4,27.82
+Physical SecuGen Dataset,84,42,42,0.027292,0.085954,"[0.000039, 0.300480]","[0.000286, 0.457554]",155.25,83.92,13.02,238.57,10967.82,52.36

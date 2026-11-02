@@ -15,17 +15,17 @@ from mysql.connector import errorcode
 from dotenv import load_dotenv
 
 # Load local environment variables from .env
-load_dotenv(Path(__file__).resolve().parent / ".env")
+load_dotenv(Path(__file__).resolve().parent / ".env", override=True)
 
 MYSQL_HOST = os.getenv("MYSQL_HOST", "localhost")
 MYSQL_PORT = int(os.getenv("MYSQL_PORT", "3306"))
 MYSQL_USER = os.getenv("MYSQL_USER", "root")
 MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD", "")
-MYSQL_DATABASE = os.getenv("MYSQL_DATABASE", "fingerprint_db")
-MATCH_THRESHOLD = float(os.getenv("MATCH_THRESHOLD", "45.0"))
+MYSQL_DATABASE = os.getenv("MYSQL_DATABASE", "fingersure_eval_db")
+MATCH_THRESHOLD = float(os.getenv("MATCH_THRESHOLD", "50.0"))
 if MATCH_THRESHOLD <= 1.0:
     # Upgrade legacy fractional 0.0-1.0 threshold to SourceAFIS raw score scale
-    MATCH_THRESHOLD = 45.0
+    MATCH_THRESHOLD = 50.0
 
 
 def get_connection_config(include_db: bool = True) -> Dict[str, Any]:
@@ -249,61 +249,242 @@ def get_dataset_statistics() -> Dict[str, Any]:
 
 def get_gallery_statistics() -> Dict[str, Any]:
     """
-    Retrieve statistics from the actual operational FVC gallery (newdb.external_fvc_clean_gallery).
+    Retrieve statistics from the operational gallery (fingersure_eval_db.fingerprint_gallery).
     This is the gallery used by the live identification pipeline.
     """
     try:
+        target_db = os.getenv("MYSQL_DATABASE", "fingersure_eval_db")
+        target_table = "fingerprint_gallery"
+
         conn = mysql.connector.connect(
             host=MYSQL_HOST,
             port=MYSQL_PORT,
             user=MYSQL_USER,
             password=MYSQL_PASSWORD,
-            database="newdb",
+            database=target_db,
             charset="utf8mb4",
             use_pure=True,
         )
         cursor = conn.cursor(dictionary=True)
 
         # Gallery templates
-        cursor.execute("""
+        cursor.execute(f"""
             SELECT COUNT(*) AS total_templates
-            FROM external_fvc_clean_gallery
-            WHERE generation_status = 'generated' AND template_data IS NOT NULL
+            FROM `{target_table}`
+            WHERE template_data IS NOT NULL
         """)
         row_gallery = cursor.fetchone() or {"total_templates": 0}
 
-        cursor.execute("""
-            SELECT MIN(fingerprint_id) AS min_id, MAX(fingerprint_id) AS max_id
-            FROM external_fvc_clean_gallery
-            WHERE generation_status = 'generated' AND template_data IS NOT NULL
+        cursor.execute(f"""
+            SELECT MIN(id) AS min_id, MAX(id) AS max_id, COUNT(DISTINCT participant_id) AS distinct_participants
+            FROM `{target_table}`
+            WHERE template_data IS NOT NULL
         """)
-        row_range = cursor.fetchone() or {"min_id": None, "max_id": None}
+        row_range = cursor.fetchone() or {"min_id": None, "max_id": None, "distinct_participants": 0}
 
-        # Enrolled fingerprints
-        cursor.execute("SELECT COUNT(*) AS enrolled_count FROM enrolled_fingerprints")
-        row_enrolled = cursor.fetchone() or {"enrolled_count": 0}
+        cursor.close()
+        conn.close()
 
-        cursor.execute("SELECT COUNT(DISTINCT subject_id) AS enrolled_subjects FROM enrolled_fingerprints")
-        row_subj = cursor.fetchone() or {"enrolled_subjects": 0}
+        total_templates = int(row_gallery["total_templates"])
+        distinct_participants = int(row_range.get("distinct_participants") or 0)
+
+        return {
+            "database": target_db,
+            "gallery_table": target_table,
+            "gallery_templates": total_templates,
+            "total_templates": total_templates,
+            "gallery_id_range": f"{row_range['min_id']} to {row_range['max_id']}" if row_range['min_id'] else "N/A",
+            "enrolled_fingerprints": total_templates,
+            "enrolled_subjects": distinct_participants,
+            "distinct_participants": distinct_participants,
+            "note": f"Operational gallery from {target_db}.{target_table} used by live identification.",
+        }
+    except Exception as e:
+        target_db = os.getenv("MYSQL_DATABASE", "fingersure_eval_db")
+        return {
+            "database": target_db,
+            "gallery_table": "fingerprint_gallery",
+            "gallery_templates": 0,
+            "total_templates": 0,
+            "enrolled_fingerprints": 0,
+            "enrolled_subjects": 0,
+            "error": str(e),
+        }
+
+
+# ==============================================================================
+# PHYSICAL DATASET COLLECTION SCHEMA & HELPERS
+# ==============================================================================
+
+def init_physical_collection_db():
+    """
+    Initializes dedicated tables for physical dataset collection:
+    - physical_dataset_collection: stores all 10-finger clean and distorted records
+    - physical_dataset_failed_captures: logs failed/rejected scan attempts
+    Preserves all existing tables (fingerprint_gallery, etc.) non-destructively.
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Table 1: physical_dataset_collection
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS physical_dataset_collection (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                participant_id VARCHAR(50) NOT NULL,
+                hand VARCHAR(10) NOT NULL,
+                finger VARCHAR(20) NOT NULL,
+                `condition` TINYINT NOT NULL,
+                filename VARCHAR(255) NOT NULL,
+                image_path VARCHAR(500) NOT NULL,
+                capture_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                image_width INT NOT NULL,
+                image_height INT NOT NULL,
+                capture_status VARCHAR(50) NOT NULL DEFAULT 'accepted',
+                scanner_model VARCHAR(100),
+                scanner_serial VARCHAR(100),
+                image_quality INT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                UNIQUE KEY uk_participant_hand_finger_cond (participant_id, hand, finger, `condition`),
+                INDEX idx_participant (participant_id),
+                INDEX idx_condition (`condition`),
+                INDEX idx_hand_finger (hand, finger)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            """
+        )
+
+        # Table 2: physical_dataset_failed_captures
+        cursor.execute(
+            """
+            CREATE TABLE IF NOT EXISTS physical_dataset_failed_captures (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                participant_id VARCHAR(50) NOT NULL,
+                hand VARCHAR(10) NOT NULL,
+                finger VARCHAR(20) NOT NULL,
+                `condition` TINYINT NOT NULL,
+                error_message TEXT,
+                capture_timestamp TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                scanner_model VARCHAR(100),
+                scanner_serial VARCHAR(100),
+                INDEX idx_fail_participant (participant_id)
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            """
+        )
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return {"status": "success", "message": "Physical collection tables verified/created."}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}
+
+
+def save_physical_capture_to_db(record_data: dict) -> bool:
+    """
+    Insert or update a physical fingerprint capture record in MySQL.
+    Uses ON DUPLICATE KEY UPDATE to prevent duplicates while allowing updates.
+    """
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        query = """
+            INSERT INTO physical_dataset_collection (
+                participant_id, hand, finger, `condition`, filename,
+                image_path, capture_timestamp, image_width, image_height,
+                capture_status, scanner_model, scanner_serial, image_quality
+            ) VALUES (
+                %(participant_id)s, %(hand)s, %(finger)s, %(condition)s, %(filename)s,
+                %(image_path)s, %(capture_timestamp)s, %(image_width)s, %(image_height)s,
+                %(capture_status)s, %(scanner_model)s, %(scanner_serial)s, %(image_quality)s
+            )
+            ON DUPLICATE KEY UPDATE
+                filename = VALUES(filename),
+                image_path = VALUES(image_path),
+                capture_timestamp = VALUES(capture_timestamp),
+                image_width = VALUES(image_width),
+                image_height = VALUES(image_height),
+                capture_status = VALUES(capture_status),
+                scanner_model = VALUES(scanner_model),
+                scanner_serial = VALUES(scanner_serial),
+                image_quality = VALUES(image_quality),
+                updated_at = CURRENT_TIMESTAMP;
+        """
+        cursor.execute(query, record_data)
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"[DB Warning] Could not save physical capture to MySQL: {e}")
+        return False
+
+
+def record_failed_physical_capture_to_db(fail_data: dict) -> bool:
+    """Log a failed or rejected capture attempt in MySQL."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        query = """
+            INSERT INTO physical_dataset_failed_captures (
+                participant_id, hand, finger, `condition`, error_message,
+                scanner_model, scanner_serial
+            ) VALUES (
+                %(participant_id)s, %(hand)s, %(finger)s, %(condition)s, %(error_message)s,
+                %(scanner_model)s, %(scanner_serial)s
+            );
+        """
+        cursor.execute(query, fail_data)
+        conn.commit()
+        cursor.close()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"[DB Warning] Could not log failed capture to MySQL: {e}")
+        return False
+
+
+def get_physical_collection_stats_from_db() -> dict:
+    """Retrieve physical dataset collection statistics from MySQL."""
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT COUNT(*) AS total_images FROM physical_dataset_collection WHERE capture_status = 'accepted';")
+        total_images = (cursor.fetchone() or {}).get("total_images", 0)
+
+        cursor.execute("SELECT COUNT(DISTINCT participant_id) AS total_participants FROM physical_dataset_collection WHERE capture_status = 'accepted';")
+        total_participants = (cursor.fetchone() or {}).get("total_participants", 0)
+
+        cursor.execute("SELECT COUNT(*) AS clean_count FROM physical_dataset_collection WHERE `condition` = 0 AND capture_status = 'accepted';")
+        clean_count = (cursor.fetchone() or {}).get("clean_count", 0)
+
+        cursor.execute("SELECT COUNT(*) AS dist_count FROM physical_dataset_collection WHERE `condition` = 1 AND capture_status = 'accepted';")
+        dist_count = (cursor.fetchone() or {}).get("dist_count", 0)
+
+        cursor.execute("SELECT COUNT(*) AS total_failures FROM physical_dataset_failed_captures;")
+        total_failures = (cursor.fetchone() or {}).get("total_failures", 0)
 
         cursor.close()
         conn.close()
 
         return {
-            "database": "newdb",
-            "gallery_table": "external_fvc_clean_gallery",
-            "gallery_templates": int(row_gallery["total_templates"]),
-            "gallery_id_range": f"{row_range['min_id']} to {row_range['max_id']}" if row_range['min_id'] else "N/A",
-            "enrolled_fingerprints": int(row_enrolled["enrolled_count"]),
-            "enrolled_subjects": int(row_subj["enrolled_subjects"]),
-            "note": "This is the operational gallery used by the live identification pipeline.",
+            "total_images": total_images,
+            "total_participants": total_participants,
+            "clean_images": clean_count,
+            "distorted_images": dist_count,
+            "failed_captures": total_failures,
         }
     except Exception as e:
         return {
-            "database": "newdb",
-            "gallery_templates": 0,
-            "enrolled_fingerprints": 0,
-            "enrolled_subjects": 0,
+            "total_images": 0,
+            "total_participants": 0,
+            "clean_images": 0,
+            "distorted_images": 0,
+            "failed_captures": 0,
             "error": str(e),
         }
 

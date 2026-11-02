@@ -1,0 +1,123 @@
+=====================================================================================
+   FINGERSURE BIOMETRIC ACCURACY EVALUATION REPORT: BEFORE vs. AFTER DDRNET
+          (Reference Gallery Retrieved Exclusively from MySQL Database)
+=====================================================================================
+Execution Timestamp:        2026-10-30 21:58:19
+MySQL Database:             fingersure_eval_db
+MySQL Gallery Table:        fingerprint_gallery
+Clean Enrolled Identities:  42 (Verified in MySQL)
+Probe Queries (Distorted):  42 images from FingerSure_Dataset/distorted/
+Probe Queries (Rectified):  42 images from FingerSure_Dataset/rectified/
+Biometric Matcher:          SourceAFIS (afis package / SourceAFISMatcher)
+Documented Threshold:       MATCH_THRESHOLD = 50.0
+=====================================================================================
+
+1. FINAL COMPARISON TABLE
+-------------------------------------------------------------------------------------
+Metric                              | Before Rectification | After Rectification  | Difference  
+-------------------------------------------------------------------------------------
+Top-1 accuracy                      |              38.10% |              33.33% |      -4.77%
+Top-5 accuracy                      |              54.76% |              42.86% |     -11.90%
+FAR (False Acceptance Rate)         |            17.0732% |            15.6794% |    -1.3938%
+FRR (False Rejection Rate)          |              40.48% |              50.00% |      +9.52%
+Mean genuine score                  |                73.28 |                69.77 |      -3.51
+Mean impostor score                 |                39.25 |                38.44 |      -0.81
+Successful query extractions        |                   42 |                   42 |         +0
+Failed query extractions            |                    0 |                    0 |         +0
+-------------------------------------------------------------------------------------
+
+2. ADDITIONAL STATISTICAL METRICS
+-------------------------------------------------------------------------------------
+Metric                              | Before Rectification | After Rectification  | Difference  
+-------------------------------------------------------------------------------------
+Median Genuine Score                |                59.25 |                50.47 |      -8.78
+Std Dev Genuine Score               |                52.61 |                47.62 |      -4.99
+Min Genuine Score                   |                25.21 |                19.86 |      -5.35
+Max Genuine Score                   |               275.49 |               203.73 |     -71.76
+Genuine Acceptance Rate (GAR)       |              59.52% |              50.00% |      -9.52%
+Max Impostor Score                  |               131.06 |               132.57 |      +1.51
+-------------------------------------------------------------------------------------
+
+3. PAIRED SCORE ANALYSIS & VERIFICATION TRANSITIONS
+-------------------------------------------------------------------------------------
+Total Finger Identities Evaluated:         42
+Identities with Higher Genuine Score:       23 / 42 (54.8%)
+Identities with Lower Genuine Score:        19 / 42 (45.2%)
+Identities with Unchanged Score:            0 / 42 (0.0%)
+Rescued Identities (Fail -> Pass @ 50.0):   2
+Maintained Identities (Pass -> Pass @ 50.0):19
+Persistent Failures (Fail -> Fail @ 50.0):  15
+Degraded Transitions (Pass -> Fail @ 50.0): 6
+-------------------------------------------------------------------------------------
+
+4. THRESHOLD SWEEP (FAR, FRR, GAR) ACROSS OPERATING POINTS
+-------------------------------------------------------------------------------------
+Threshold    | Distorted FRR   Distorted FAR   | Rectified FRR   Rectified FAR  
+-------------------------------------------------------------------------------------
+10.0         |          0.00%      100.0000% |          0.00%      100.0000%
+20.0         |          0.00%       98.4321% |          2.38%       97.5610%
+30.0         |         11.90%       75.6098% |         14.29%       74.9129%
+40.0         |         30.95%       40.1858% |         28.57%       36.8757%
+50.0         |         40.48%       17.0732% |         50.00%       15.6794% <-- (Documented Operating Point)
+60.0         |         50.00%        6.2137% |         64.29%        5.0523%
+70.0         |         66.67%        2.4971% |         69.05%        1.8583%
+80.0         |         71.43%        0.9292% |         71.43%        0.9292%
+90.0         |         76.19%        0.2904% |         76.19%        0.2904%
+100.0        |         83.33%        0.1742% |         78.57%        0.1742%
+-------------------------------------------------------------------------------------
+
+5. PER-IDENTITY MATCHING SCORE BREAKDOWN
+-------------------------------------------------------------------------------------
+Identity                       Distorted    Rectified    Diff       Rank Dist  Rank Rect  Transition
+-------------------------------------------------------------------------------------
+A_LEFT_THUMB                     161.24      203.73     +42.49        1          1     MAINTAINED (Pass -> Pass)
+A_RIGHT_THUMB                     90.36       69.65     -20.71        1          1     MAINTAINED (Pass -> Pass)
+B_LEFT_THUMB                      25.29       32.07      +6.78       35         23     PERSISTENT_FAIL (Fail -> Fail)
+B_RIGHT_THUMB                     32.04       47.33     +15.29       19          9     PERSISTENT_FAIL (Fail -> Fail)
+Bharthi_LEFT_THUMB                37.99       27.00     -10.99       28         40     PERSISTENT_FAIL (Fail -> Fail)
+Bharthi_RIGHT_THUMB               46.68       55.90      +9.22       12          4     RESCUED (Fail -> Pass)
+Bhushan_LEFT_THUMB               173.31       31.33    -141.98        1         31     DEGRADED (Pass -> Fail)
+Bhushan_RIGHT_THUMB               60.68      130.61     +69.93        1          1     MAINTAINED (Pass -> Pass)
+Dhrithi_LEFT_THUMB                28.35       19.86      -8.49       25         41     PERSISTENT_FAIL (Fail -> Fail)
+Dhrithi_RIGHT_THUMB              131.04      154.52     +23.48        1          1     MAINTAINED (Pass -> Pass)
+Disha_LEFT_THUMB                  43.94       46.72      +2.78       10          8     PERSISTENT_FAIL (Fail -> Fail)
+Disha_RIGHT_THUMB                 69.66       84.72     +15.06        1          1     MAINTAINED (Pass -> Pass)
+Ganesh_LEFT_THUMB                 25.21       25.85      +0.64       42         37     PERSISTENT_FAIL (Fail -> Fail)
+Ganesh_RIGHT_THUMB                63.10       25.10     -38.00        7         40     DEGRADED (Pass -> Fail)
+Kusuma_LEFT_THUMB                 39.38       25.22     -14.16       18         35     PERSISTENT_FAIL (Fail -> Fail)
+Kusuma_RIGHT_THUMB                26.09       43.27     +17.18       40         10     PERSISTENT_FAIL (Fail -> Fail)
+Lakshmi_LEFT_THUMB                92.96       90.69      -2.27        2          1     MAINTAINED (Pass -> Pass)
+Lakshmi_RIGHT_THUMB               73.41       52.87     -20.54        5          4     MAINTAINED (Pass -> Pass)
+Mangalamma_LEFT_THUMB             61.83       54.98      -6.85        2          7     MAINTAINED (Pass -> Pass)
+Mangalamma_RIGHT_THUMB            42.98      169.56    +126.58       21          1     RESCUED (Fail -> Pass)
+Neha_LEFT_THUMB                   67.15      137.20     +70.05        1          1     MAINTAINED (Pass -> Pass)
+Neha_RIGHT_THUMB                 108.66      145.11     +36.45        1          1     MAINTAINED (Pass -> Pass)
+Priyanka_LEFT_THUMB               64.64       38.93     -25.71        2         21     DEGRADED (Pass -> Fail)
+Priyanka_RIGHT_THUMB              32.98       49.66     +16.68       33          9     PERSISTENT_FAIL (Fail -> Fail)
+Sanjana_LEFT_THUMB                38.05       41.77      +3.72       15         17     PERSISTENT_FAIL (Fail -> Fail)
+Sanjana_RIGHT_THUMB               44.77       36.79      -7.98       15         14     PERSISTENT_FAIL (Fail -> Fail)
+harshitha_LEFT_THUMB              34.38       42.21      +7.83       22         14     PERSISTENT_FAIL (Fail -> Fail)
+harshitha_RIGHT_THUMB             65.58       53.07     -12.51        4         16     MAINTAINED (Pass -> Pass)
+issa_LEFT_THUMB                   53.15      171.73    +118.58        5          1     MAINTAINED (Pass -> Pass)
+issa_RIGHT_THUMB                  74.07       80.66      +6.59        1          1     MAINTAINED (Pass -> Pass)
+jyothika_LEFT_THUMB               37.56       43.43      +5.87       19          5     PERSISTENT_FAIL (Fail -> Fail)
+jyothika_RIGHT_THUMB              28.70       46.28     +17.58       39         10     PERSISTENT_FAIL (Fail -> Fail)
+manal_LEFT_THUMB                  57.81       59.34      +1.53        4          7     MAINTAINED (Pass -> Pass)
+manal_RIGHT_THUMB                 98.15       60.53     -37.62        1          8     MAINTAINED (Pass -> Pass)
+manya_LEFT_THUMB                 214.18       27.86    -186.32        1         36     DEGRADED (Pass -> Fail)
+manya_RIGHT_THUMB                 32.97       43.30     +10.33       34         23     PERSISTENT_FAIL (Fail -> Fail)
+shuban_LEFT_THUMB                 55.87       33.69     -22.18        1          8     DEGRADED (Pass -> Fail)
+shuban_RIGHT_THUMB                84.96       51.27     -33.69        1          4     MAINTAINED (Pass -> Pass)
+sushmitha_LEFT_THUMB              55.99       31.62     -24.37       10         35     DEGRADED (Pass -> Fail)
+sushmitha_RIGHT_THUMB             89.54      129.34     +39.80        1          1     MAINTAINED (Pass -> Pass)
+thryaee_LEFT_THUMB               275.49      137.57    -137.92        1          1     MAINTAINED (Pass -> Pass)
+thryaee_RIGHT_THUMB              137.64       78.16     -59.48        1          1     MAINTAINED (Pass -> Pass)
+-------------------------------------------------------------------------------------
+
+6. VALIDATION & SECURITY CONFORMANCE
+-------------------------------------------------------------------------------------
+[✓] MySQL Database: Confirmed active connection to 'fingersure_eval_db'.
+[✓] Gallery Loading: All 42 reference templates fetched via SQL from 'fingerprint_gallery'.
+[✓] Zero Local .dat Dependency: Matching comparisons used memory-deserialized database records only.
+[✓] Evaluation Isolation: Production database and application tables were untouched.
+=====================================================================================

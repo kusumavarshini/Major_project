@@ -1,0 +1,4 @@
+variation_type,total_samples,correct,incorrect,accuracy_pct,mean_prob_distorted,std_prob_distorted
+Normal Relaxed,42,42,0,100.0,0.0273,0.0504
+Rotated / Sideways,33,0,33,0.0,0.1021,0.1176
+Uneven / Light Contact,9,0,9,0.0,0.0266,0.0198

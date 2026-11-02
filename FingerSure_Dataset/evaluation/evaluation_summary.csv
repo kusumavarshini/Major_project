@@ -1,0 +1,29 @@
+Metric,Before Rectification,After Rectification,Difference
+Reference Gallery Source,MySQL (fingersure_eval_db.fingerprint_gallery),MySQL (fingersure_eval_db.fingerprint_gallery),N/A
+Enrolled Reference Gallery Size,42,42,0
+Total Query Images,42,42,0
+Successful Query Extractions,42,42,0
+Failed Query Extractions,0,0,0
+Biometric Threshold (MATCH_THRESHOLD),50.0,50.0,0
+Total Genuine Comparisons,42,42,0
+Total Impostor Comparisons,1722,1722,0
+Top-1 Identification Accuracy (%),38.10%,33.33%,-4.77%
+Top-5 Identification Accuracy (%),54.76%,42.86%,-11.90%
+False Rejection Rate (FRR @ 50.0) (%),40.48%,50.00%,+9.52%
+Genuine Acceptance Rate (GAR @ 50.0) (%),59.52%,50.00%,-9.52%
+False Acceptance Rate (FAR @ 50.0) (%),17.0732%,15.6794%,-1.3938%
+Mean Genuine Score,73.28,69.77,-3.51
+Median Genuine Score,59.25,50.47,-8.78
+Std Dev Genuine Score,52.61,47.62,-4.99
+Min Genuine Score,25.21,19.86,-5.35
+Max Genuine Score,275.49,203.73,-71.76
+Mean Impostor Score,39.25,38.44,-0.81
+Median Impostor Score,36.96,36.38,-0.58
+Max Impostor Score,131.06,132.57,+1.51
+Identities with Improved Genuine Score,23 / 42 (54.8%),N/A,N/A
+Identities with Degraded Genuine Score,19 / 42 (45.2%),N/A,N/A
+Identities with Unchanged Genuine Score,0 / 42 (0.0%),N/A,N/A
+Verification Rescued (Fail -> Pass),2 identity(ies),N/A,N/A
+Verification Maintained (Pass -> Pass),19 identity(ies),N/A,N/A
+Verification Persistent Fail (Fail -> Fail),15 identity(ies),N/A,N/A
+Verification Degraded (Pass -> Fail),6 identity(ies),N/A,N/A

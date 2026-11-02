@@ -1,0 +1,6 @@
+condition,alpha,sigma,genuine_comparisons,impostor_comparisons,mean_genuine_score,median_genuine_score,std_genuine_score,min_genuine_score,max_genuine_score,genuine_match_rate_pct,frr_pct,mean_matched_minutiae,mean_clean_minutiae,mean_variant_minutiae,mean_minutiae_diff,score_retention_pct,minutiae_retention_pct,mean_impostor_score,max_impostor_score,false_acceptances,far_pct,roc_auc
+Clean Baseline,0.0,0.0,20,380,307.12,269.75,163.8,71.5,520.0,100.0,0.0,47.25,47.25,47.25,0.0,100.0,100.0,25.3158,52.0,8,2.11,1.0
+alpha = 0.6,0.6,15.0,20,380,50.38,35.75,46.58,19.5,182.0,40.0,60.0,7.75,47.25,52.75,5.5,17.59,17.59,25.0934,58.5,14,3.68,0.719
+alpha = 0.8,0.8,15.0,20,380,52.0,39.0,47.34,19.5,227.5,30.0,70.0,8.0,47.25,53.05,5.8,18.32,18.32,24.9395,52.0,5,1.32,0.8699
+alpha = 1.0,1.0,15.0,20,380,49.73,32.5,43.59,19.5,182.0,45.0,55.0,7.65,47.25,51.65,4.4,17.89,17.89,24.6658,71.5,8,2.11,0.6871
+alpha = 1.2,1.2,15.0,20,380,48.42,32.5,47.65,19.5,201.5,30.0,70.0,7.45,47.25,50.25,3.0,17.42,17.42,26.2566,52.0,11,2.89,0.707

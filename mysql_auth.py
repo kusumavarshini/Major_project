@@ -22,13 +22,13 @@ CACHE_TTL_SECONDS = 300.0
 
 
 def _connect():
-    """Connect to the existing gallery database."""
+    """Connect to the gallery database."""
     return mysql.connector.connect(
         host=os.getenv("MYSQL_HOST", "localhost"),
         port=int(os.getenv("MYSQL_PORT", "3306")),
         user=os.getenv("MYSQL_USER", "root"),
         password=os.getenv("MYSQL_PASSWORD", ""),
-        database="newdb",
+        database=os.getenv("MYSQL_DATABASE", "fingersure_eval_db"),
         charset="utf8mb4",
         use_pure=True,
     )
@@ -38,20 +38,20 @@ def get_person_templates(
     subject_id: str,
     mysql_password: Optional[str] = None,
 ) -> Dict[str, Any]:
-    """Retrieve all templates enrolled for a subject."""
+    """Retrieve all templates enrolled for a subject from fingerprint_gallery."""
     conn = _connect()
     cursor = conn.cursor(dictionary=True)
 
     try:
         cursor.execute(
             """
-            SELECT enrollment_id, subject_id, filename, image_path,
-                   template_data, minutiae_count, image_width, image_height
-            FROM enrolled_fingerprints
-            WHERE subject_id = %s
-            ORDER BY enrollment_id
+            SELECT id, participant_id, finger, identity, source_image,
+                   template_data, minutiae_count
+            FROM fingerprint_gallery
+            WHERE identity = %s OR participant_id = %s
+            ORDER BY id
             """,
-            (subject_id,),
+            (subject_id, subject_id),
         )
         rows = cursor.fetchall()
     finally:
@@ -66,13 +66,13 @@ def get_person_templates(
             continue
 
         templates.append({
-            "fingerprint_id": row["enrollment_id"],
-            "filename": row["filename"],
-            "image_path": row["image_path"],
+            "fingerprint_id": row["id"],
+            "filename": row["source_image"],
+            "image_path": None,
             "template": tpl,
             "minutiae_count": row["minutiae_count"],
-            "image_width": row["image_width"],
-            "image_height": row["image_height"],
+            "image_width": tpl.get("image_width", 300),
+            "image_height": tpl.get("image_height", 400),
         })
 
     if not templates:
@@ -83,7 +83,7 @@ def get_person_templates(
     return {
         "subject_id": subject_id,
         "family_id": None,
-        "member_type": "ENROLLED",
+        "member_type": "GALLERY",
         "templates": templates,
     }
 
@@ -91,7 +91,7 @@ def get_person_templates(
 def get_all_gallery_templates(
     force_refresh: bool = False,
 ) -> List[Dict[str, Any]]:
-    """Load the original gallery and new enrollments for 1:N identification."""
+    """Load the 42 reference gallery templates from fingersure_eval_db.fingerprint_gallery for 1:N identification."""
     global _GALLERY_CACHE, _LAST_CACHE_TIME
 
     now = time.time()
@@ -107,13 +107,11 @@ def get_all_gallery_templates(
     gallery: List[Dict[str, Any]] = []
 
     try:
-        # Preserve and read all original gallery templates.
         cursor.execute(
             """
-            SELECT fingerprint_id, template_data, minutiae_count,
-                   template_version, generation_status
-            FROM external_fvc_clean_gallery
-            WHERE generation_status = 'generated'
+            SELECT id, participant_id, finger, identity, source_image, minutiae_count, template_data
+            FROM fingerprint_gallery
+            ORDER BY id ASC
             """
         )
 
@@ -127,51 +125,53 @@ def get_all_gallery_templates(
                 continue
 
             gallery.append({
-                "fingerprint_id": row["fingerprint_id"],
-                "subject_id": f"GALLERY-{row['fingerprint_id']}",
+                "fingerprint_id": row["id"],
+                "id": row["id"],
+                "subject_id": row["identity"],
+                "identity": row["identity"],
+                "participant_id": row["participant_id"],
+                "finger": row["finger"],
                 "family_id": None,
-                "member_type": "EXISTING_GALLERY",
-                "filename": f"gallery_{row['fingerprint_id']}",
+                "member_type": "GALLERY",
+                "filename": row["source_image"],
                 "image_path": None,
                 "minutiae_count": row["minutiae_count"],
-                "template": tpl,
-            })
-
-        # Add newly enrolled templates.
-        cursor.execute(
-            """
-            SELECT enrollment_id, subject_id, filename, image_path,
-                   template_data, minutiae_count, image_width, image_height
-            FROM enrolled_fingerprints
-            ORDER BY enrollment_id
-            """
-        )
-
-        for row in cursor.fetchall():
-            try:
-                tpl = pickle.loads(row["template_data"])
-            except Exception:
-                continue
-
-            if not isinstance(tpl, dict) or len(tpl.get("minutiae", [])) < 2:
-                continue
-
-            gallery.append({
-                "fingerprint_id": f"ENROLLED-{row['enrollment_id']}",
-                "subject_id": row["subject_id"],
-                "family_id": None,
-                "member_type": "ENROLLED",
-                "filename": row["filename"],
-                "image_path": row["image_path"],
-                "minutiae_count": row["minutiae_count"],
-                "image_width": row["image_width"],
-                "image_height": row["image_height"],
                 "template": tpl,
             })
 
     finally:
         cursor.close()
         conn.close()
+
+    # Pre-index invariant edges, buckets, and adjacency for fast 1:N comparisons
+    import afis.algorithms.safis as safis
+    idx_params = safis.SafisParams(
+        max_neighbors=10,
+        max_edge_length=320.0,
+        length_tol=8.0,
+        angle_tol=0.35,
+        max_roots=25,
+    )
+    length_tol = float(idx_params.length_tol) or 1e-6
+    for item in gallery:
+        cand_tpl = item.get("template", item)
+        if cand_tpl.get("_edges") is None:
+            c_minu = cand_tpl.get("minutiae")
+            if c_minu is not None and len(c_minu) >= 2:
+                cand_edges = safis.build_edges(c_minu, idx_params)
+                cand_buckets = {}
+                cand_adj = {}
+                for e in cand_edges:
+                    k = int(round(e.length / length_tol))
+                    cand_buckets.setdefault(k, []).append(e)
+                    cand_adj.setdefault(e.ref, []).append(e)
+                cand_tpl["_edges"] = cand_edges
+                cand_tpl["_buckets"] = cand_buckets
+                cand_tpl["_adj"] = cand_adj
+            else:
+                cand_tpl["_edges"] = []
+                cand_tpl["_buckets"] = {}
+                cand_tpl["_adj"] = {}
 
     _GALLERY_CACHE = gallery
     _LAST_CACHE_TIME = time.time()
@@ -194,7 +194,8 @@ def enroll_fingerprint(
     template: Dict[str, Any],
 ) -> int:
     """Save a new SourceAFIS template without modifying the original gallery."""
-    if not subject_id.strip():
+    clean_sub_id = subject_id.strip()
+    if not clean_sub_id:
         raise ValueError("Subject ID cannot be empty.")
 
     minutiae_count = int(template.get("minutiae_count", 0))
@@ -207,6 +208,15 @@ def enroll_fingerprint(
     cursor = conn.cursor()
 
     try:
+        # Enforce unique subject_id across enrolled fingerprints
+        cursor.execute(
+            "SELECT enrollment_id FROM enrolled_fingerprints WHERE subject_id = %s",
+            (clean_sub_id,)
+        )
+        existing = cursor.fetchone()
+        if existing:
+            raise ValueError(f"Subject ID '{clean_sub_id}' is already enrolled (enrollment ID {existing[0]}).")
+
         cursor.execute(
             """
             INSERT INTO enrolled_fingerprints (
@@ -216,7 +226,7 @@ def enroll_fingerprint(
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
             """,
             (
-                subject_id.strip(),
+                clean_sub_id,
                 filename,
                 image_path,
                 serialized,
@@ -237,3 +247,4 @@ def enroll_fingerprint(
 
     clear_gallery_cache()
     return int(enrollment_id)
+

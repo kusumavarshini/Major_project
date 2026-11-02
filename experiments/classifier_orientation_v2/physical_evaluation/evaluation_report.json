@@ -1,0 +1,371 @@
+{
+  "experiment": "classifier_orientation_v2",
+  "evaluation_target": "physical_secugen_dataset_84_images",
+  "timestamp": "2026-11-01 16:30:30",
+  "checkpoint": "best_model.pth",
+  "locked_threshold": 0.5,
+  "dataset": {
+    "source": "FingerSure_Dataset/",
+    "total_images": 84,
+    "clean_images": 42,
+    "distorted_images": 42
+  },
+  "metrics": {
+    "accuracy": 0.5,
+    "precision": 0.0,
+    "recall": 0.0,
+    "f1_score": 0.0,
+    "specificity": 1.0,
+    "balanced_accuracy": 0.5,
+    "roc_auc": 0.7517,
+    "false_positive_rate": 0.0,
+    "false_negative_rate": 1.0,
+    "tp": 0,
+    "fp": 0,
+    "tn": 42,
+    "fn": 42
+  },
+  "subgroups": {
+    "clean": {
+      "total": 42,
+      "correct_tn": 42,
+      "incorrect_fp": 0,
+      "accuracy": 1.0,
+      "mean_prob_distorted": 0.0273,
+      "std_prob_distorted": 0.0504
+    },
+    "distorted": {
+      "total": 42,
+      "correct_tp": 0,
+      "incorrect_fn": 42,
+      "accuracy": 0.0,
+      "mean_prob_distorted": 0.086,
+      "std_prob_distorted": 0.1089
+    }
+  },
+  "physical_variations": [
+    {
+      "variation_type": "Normal Relaxed",
+      "total_samples": 42,
+      "correct": 42,
+      "incorrect": 0,
+      "accuracy_pct": 100.0,
+      "mean_prob_distorted": 0.0273,
+      "std_prob_distorted": 0.0504
+    },
+    {
+      "variation_type": "Rotated / Sideways",
+      "total_samples": 33,
+      "correct": 0,
+      "incorrect": 33,
+      "accuracy_pct": 0.0,
+      "mean_prob_distorted": 0.1021,
+      "std_prob_distorted": 0.1176
+    },
+    {
+      "variation_type": "Uneven / Light Contact",
+      "total_samples": 9,
+      "correct": 0,
+      "incorrect": 9,
+      "accuracy_pct": 0.0,
+      "mean_prob_distorted": 0.0266,
+      "std_prob_distorted": 0.0198
+    }
+  ],
+  "incorrect_samples": [
+    {
+      "filename": "A_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.084527,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "A_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.074742,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "B_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.128017,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "B_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.054759,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "Bharthi_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.006824,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "Bharthi_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.036022,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "Bhushan_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.002284,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "Bhushan_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.001468,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "Dhrithi_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.220142,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "Dhrithi_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.360173,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "Disha_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.057778,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "Disha_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.02787,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "Ganesh_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.048911,
+      "physical_variation": "Uneven / Light Contact"
+    },
+    {
+      "filename": "Ganesh_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.025655,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "harshitha_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.134099,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "harshitha_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.109017,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "issa_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.004071,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "issa_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.012589,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "jyothika_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.055881,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "jyothika_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.056309,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "Kusuma_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.457554,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "Kusuma_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.046024,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "Lakshmi_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.001706,
+      "physical_variation": "Uneven / Light Contact"
+    },
+    {
+      "filename": "Lakshmi_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.001853,
+      "physical_variation": "Uneven / Light Contact"
+    },
+    {
+      "filename": "manal_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.047885,
+      "physical_variation": "Uneven / Light Contact"
+    },
+    {
+      "filename": "manal_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.02371,
+      "physical_variation": "Uneven / Light Contact"
+    },
+    {
+      "filename": "Mangalamma_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.037838,
+      "physical_variation": "Uneven / Light Contact"
+    },
+    {
+      "filename": "Mangalamma_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.042226,
+      "physical_variation": "Uneven / Light Contact"
+    },
+    {
+      "filename": "manya_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.004042,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "manya_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.003437,
+      "physical_variation": "Uneven / Light Contact"
+    },
+    {
+      "filename": "Neha_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.094603,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "Neha_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.031767,
+      "physical_variation": "Uneven / Light Contact"
+    },
+    {
+      "filename": "Priyanka_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.077794,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "Priyanka_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.024106,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "Sanjana_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.132299,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "Sanjana_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.241354,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "shuban_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.051579,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "shuban_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.000286,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "sushmitha_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.097598,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "sushmitha_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.406034,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "thryaee_LEFT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.059465,
+      "physical_variation": "Rotated / Sideways"
+    },
+    {
+      "filename": "thryaee_RIGHT_THUMB_distorted.png",
+      "ground_truth": "DISTORTED",
+      "predicted": "CLEAN",
+      "prob_distorted": 0.225778,
+      "physical_variation": "Rotated / Sideways"
+    }
+  ]
+}
